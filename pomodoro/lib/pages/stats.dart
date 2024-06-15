@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:pomodoro/variables/colors.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class StatsScreen extends StatefulWidget {
+  const StatsScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => HomeScreenState();
+  State<StatsScreen> createState() => StatsScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: background,
       body: Text(
-        "Home Screen",
+        "Stats Screen",
       ),
     );
   }
