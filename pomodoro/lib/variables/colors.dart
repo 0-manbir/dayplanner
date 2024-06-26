@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-const Color primary = Color.fromRGBO(105, 150, 118, 1);
-const Color secondary = Color.fromRGBO(161, 198, 172, 1);
+const Color primary = Color.fromRGBO(105, 133, 150, 1);
+const Color secondary = Color.fromRGBO(173, 200, 214, 1);
 const Color accent = Color.fromRGBO(223, 142, 155, 1);
 
 // const Color primary = Color.fromRGBO(157, 157, 157, 1);
