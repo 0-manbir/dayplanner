@@ -1,16 +1,13 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
-
-import 'dart:convert';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:pomodoro/variables/colors.dart';
-import 'package:pomodoro/variables/strings.dart';
+import 'package:pomodoro/pages/helpers/database_manager.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:pomodoro/pages/tasks/newTaskWidget.dart';
+import 'package:pomodoro/pages/tasks/taskItem.dart';
+import 'package:pomodoro/variables/colors.dart';
+import 'package:pomodoro/variables/strings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,13 +15,9 @@ Future<void> main() async {
   await windowManager.ensureInitialized();
 
   await windowManager.waitUntilReadyToShow().then((_) async {
-    // await windowManager.setTitleBarStyle(TitleBarStyle.normal);
-
-    await windowManager.setSkipTaskbar(false); // add this when minimised
-    await windowManager.setOpacity(1); // add this when minimised
-    await windowManager.setAlwaysOnTop(false); // add this when minimised
-
-    // await windowManager.setIcon();
+    await windowManager.setSkipTaskbar(false);
+    await windowManager.setOpacity(1);
+    await windowManager.setAlwaysOnTop(false);
     await windowManager.center();
     await windowManager.setTitle("Pomodoro Timer");
     await windowManager.setMinimumSize(const Size(800, 500));
@@ -32,73 +25,11 @@ Future<void> main() async {
     await windowManager.show();
   });
 
-  await loadSharedPrefs();
-
-  // online mode
-  if (SUPABASE_URL != "") {
-    await Supabase.initialize(
-      url: SUPABASE_URL,
-      anonKey: SUPABASE_ANON_KEY,
-    );
-  }
-
-  onlineMode = SUPABASE_URL != "";
-
-  tasksToday = [];
-  tasksTomorrow = [];
-  tasksUpcoming = [];
-
-  if (onlineMode) {
-    loadDataSupabase();
-  } else {
-    loadDataLocal();
-  }
+  await DatabaseManager.loadSharedPrefs();
+  await DatabaseManager.loadData();
 
   runApp(const MyApp());
 }
-
-Future<void> loadSharedPrefs() async {
-  prefs = await SharedPreferences.getInstance();
-
-  if (prefs.containsKey(prefsAPIKey)) {
-    SUPABASE_URL = prefs.getString(prefsAPIKey)!;
-    SUPABASE_ANON_KEY = prefs.getString(prefsAPIKey)!;
-  }
-}
-
-Future<void> loadDataLocal() async {
-  if (prefs.containsKey(prefsTasksTodayName)) {
-    for (String taskJson in prefs.getStringList(prefsTasksTodayName)!) {
-      tasksToday.add(TaskItem.fromJson(jsonDecode(taskJson)));
-    }
-  }
-  if (prefs.containsKey(prefsTasksTomorrowName)) {
-    for (String taskJson in prefs.getStringList(prefsTasksTomorrowName)!) {
-      tasksTomorrow.add(TaskItem.fromJson(jsonDecode(taskJson)));
-    }
-  }
-  if (prefs.containsKey(prefsTasksUpcomingName)) {
-    for (String taskJson in prefs.getStringList(prefsTasksUpcomingName)!) {
-      tasksUpcoming.add(TaskItem.fromJson(jsonDecode(taskJson)));
-    }
-  }
-
-  print(
-      "local data loaded+++++++++++++++++++++++++++++++++++++++++++++++++++++");
-  print("tasksToday: ${tasksToday.length}");
-  print("tasksTomorrow: ${tasksTomorrow.length}");
-  print("tasksUpcoming: ${tasksUpcoming.length}");
-}
-
-Future<void> loadDataSupabase() async {}
-
-final supabase = Supabase.instance.client;
-late SharedPreferences prefs;
-late bool onlineMode;
-
-late List<TaskItem> tasksToday;
-late List<TaskItem> tasksTomorrow;
-late List<TaskItem> tasksUpcoming;
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -116,8 +47,8 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: Text(
-            "${DateFormat.MMMM().format(DateTime.now())} ${DateTime.now().day.toString()}, ${DateTime.now().year.toString()}",
-            style: TextStyle(
+            "${DateFormat.MMMM().format(DateTime.now())} ${DateTime.now().day}, ${DateTime.now().year}",
+            style: const TextStyle(
               fontFamily: fontfamily,
               color: textLight,
             ),
@@ -127,12 +58,12 @@ class _MyAppState extends State<MyApp> {
           elevation: 10.0,
           shadowColor: shadow,
         ),
-        body: main(),
+        body: mainContent(),
       ),
     );
   }
 
-  Widget main() {
+  Widget mainContent() {
     return Container(
       color: background,
       child: Row(
@@ -166,24 +97,30 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget newSession() {
-    return Container();
+    return Column(
+      children: [
+        Expanded(
+          child: Container(),
+        ),
+        const NewTaskWidget(),
+      ],
+    );
   }
 
   bool isHoveringTodayTasksMoreOptions = false;
   bool isHoveringTomorrowTasksMoreOptions = false;
   bool isHoveringUpcomingTasksMoreOptions = false;
+  bool isHoveringRepeatingTasksMoreOptions = false;
 
   Widget tasksToday() {
     return Column(
       children: [
         Container(
           padding: EdgeInsets.all(16.0),
-
-          // Tasks Header----------------------------------
           child: Row(
             children: [
               Text(
-                "Today (0)",
+                "Today (${DatabaseManager.tasksToday.length})",
                 style: TextStyle(
                   fontFamily: fontfamily,
                   color: textDark,
@@ -225,12 +162,6 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
-
-        addNewTask(0, () {
-          // TODO add new task today
-        }),
-
-        // Task View Today---------------------------------------
       ],
     );
   }
@@ -240,12 +171,10 @@ class _MyAppState extends State<MyApp> {
       children: [
         Container(
           padding: EdgeInsets.all(16.0),
-
-          // Tasks Header----------------------------------
           child: Row(
             children: [
               Text(
-                "Tomorrow (0)",
+                "Tomorrow (${DatabaseManager.tasksTomorrow.length})",
                 style: TextStyle(
                   fontFamily: fontfamily,
                   color: textDark,
@@ -287,12 +216,6 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
-
-        addNewTask(1, () {
-          // TODO add new task tomorrow
-        }),
-
-        // Task View Tomorrow---------------------------------------
       ],
     );
   }
@@ -302,12 +225,10 @@ class _MyAppState extends State<MyApp> {
       children: [
         Container(
           padding: EdgeInsets.all(16.0),
-
-          // Tasks Header----------------------------------
           child: Row(
             children: [
               Text(
-                "Upcoming (0)",
+                "Upcoming (${DatabaseManager.tasksUpcoming.length})",
                 style: TextStyle(
                   fontFamily: fontfamily,
                   color: textDark,
@@ -349,103 +270,7 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
-
-        addNewTask(2, () {
-          // TODO add new task upcoming
-        }),
-
-        // Task View Upcoming---------------------------------------
       ],
     );
   }
-
-  // which 'add new task' button is being hovered
-  int hoveringAddNewTask = -1;
-
-  Widget addNewTask(int index, Function onClick) {
-    return MouseRegion(
-      onEnter: (event) {
-        setState(() {
-          hoveringAddNewTask = index;
-        });
-      },
-      onExit: (event) {
-        setState(() {
-          hoveringAddNewTask = -1;
-        });
-      },
-      child: Container(
-        margin: EdgeInsets.all(12.0),
-        padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
-        decoration: BoxDecoration(
-          color: hoveringAddNewTask == index ? accent : secondary,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: GestureDetector(
-          onTap: onClick(),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add_rounded,
-                color: background,
-              ),
-              Container(width: 6.0),
-              Text(
-                "Add New Task",
-                style: TextStyle(
-                  fontFamily: fontfamily,
-                  color: background,
-                  fontSize: 16.0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class TaskItem {
-  String task = "{Empty}";
-  int minsRequired = 0;
-  TaskType taskType = TaskType.today;
-  bool isDone = false;
-
-  TaskItem({
-    required this.task,
-    required this.minsRequired,
-    required this.taskType,
-    required this.isDone,
-  });
-
-  // Convert Task object to JSON string
-  String toJson() {
-    final Map<String, dynamic> data = {
-      'task': task,
-      'minsRequired': minsRequired,
-      'taskType': taskType.toString().split('.').last,
-      'isDone': isDone,
-    };
-    return jsonEncode(data);
-  }
-
-  // Create Task object from JSON string
-  factory TaskItem.fromJson(String jsonString) {
-    final Map<String, dynamic> data = jsonDecode(jsonString);
-    return TaskItem(
-      task: data['task'],
-      minsRequired: data['minsRequired'],
-      taskType: TaskType.values
-          .firstWhere((e) => e.toString() == 'TaskType.${data['taskType']}'),
-      isDone: data['isDone'],
-    );
-  }
-}
-
-enum TaskType {
-  today,
-  tomorrow,
-  upcoming,
 }
