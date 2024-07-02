@@ -103,7 +103,7 @@ class DatabaseManager {
     List<String> temp = prefs.getStringList(prefsTasksName)!;
     temp.add(task);
 
-    prefs.setStringList(prefsTasksTodayName, temp);
+    prefs.setStringList(prefsTasksName, temp);
   }
 
   static Future<void> saveDataSupabase(TaskItem taskItem) async {

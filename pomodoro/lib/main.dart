@@ -1,4 +1,9 @@
+import 'dart:math';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -107,61 +112,23 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  bool isHoveringTodayTasksMoreOptions = false;
-  bool isHoveringTomorrowTasksMoreOptions = false;
-  bool isHoveringUpcomingTasksMoreOptions = false;
-  bool isHoveringRepeatingTasksMoreOptions = false;
+  int hoveringTasksMoreOptions = -1;
 
   Widget tasksToday() {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Text(
-                "Today (${DatabaseManager.tasksToday.length})",
-                style: TextStyle(
-                  fontFamily: fontfamily,
-                  color: textDark,
-                  fontSize: 20.0,
-                ),
-              ),
+              tasksHeaderText(TaskType.today),
               Expanded(child: Container()),
-              MouseRegion(
-                onEnter: (event) {
-                  setState(() {
-                    isHoveringTodayTasksMoreOptions = true;
-                  });
-                },
-                onExit: (event) {
-                  setState(() {
-                    isHoveringTodayTasksMoreOptions = false;
-                  });
-                },
-                child: GestureDetector(
-                  child: Container(
-                    padding: EdgeInsets.all(6.0),
-                    decoration: BoxDecoration(
-                      color: isHoveringTodayTasksMoreOptions
-                          ? accent
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      color: textDark,
-                      size: 26.0,
-                    ),
-                  ),
-                  onTap: () {
-                    // TODO today tasks options
-                  },
-                ),
-              ),
+              tasksHeaderMore(0, () {}),
             ],
           ),
         ),
+        tasksDivider(),
+        taskBuilder(TaskType.today),
       ],
     );
   }
@@ -170,52 +137,17 @@ class _MyAppState extends State<MyApp> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Text(
-                "Tomorrow (${DatabaseManager.tasksTomorrow.length})",
-                style: TextStyle(
-                  fontFamily: fontfamily,
-                  color: textDark,
-                  fontSize: 20.0,
-                ),
-              ),
+              tasksHeaderText(TaskType.tomorrow),
               Expanded(child: Container()),
-              MouseRegion(
-                onEnter: (event) {
-                  setState(() {
-                    isHoveringTomorrowTasksMoreOptions = true;
-                  });
-                },
-                onExit: (event) {
-                  setState(() {
-                    isHoveringTomorrowTasksMoreOptions = false;
-                  });
-                },
-                child: GestureDetector(
-                  child: Container(
-                    padding: EdgeInsets.all(6.0),
-                    decoration: BoxDecoration(
-                      color: isHoveringTomorrowTasksMoreOptions
-                          ? accent
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      color: textDark,
-                      size: 26.0,
-                    ),
-                  ),
-                  onTap: () {
-                    // TODO tomorrow tasks options
-                  },
-                ),
-              ),
+              tasksHeaderMore(1, () {}),
             ],
           ),
         ),
+        tasksDivider(),
+        taskBuilder(TaskType.tomorrow),
       ],
     );
   }
@@ -224,53 +156,217 @@ class _MyAppState extends State<MyApp> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
+              tasksHeaderText(TaskType.upcoming),
+              Expanded(child: Container()),
+              tasksHeaderMore(2, () {}),
+            ],
+          ),
+        ),
+        tasksDivider(),
+        taskBuilder(TaskType.upcoming),
+      ],
+    );
+  }
+
+  Widget tasksHeaderText(TaskType taskType) {
+    String text = "";
+
+    switch (taskType) {
+      case TaskType.today:
+        text = "Today (${DatabaseManager.tasksToday.length})";
+        break;
+      case TaskType.tomorrow:
+        text = "Tomorrow (${DatabaseManager.tasksTomorrow.length})";
+        break;
+      case TaskType.upcoming:
+        text = "Upcoming (${DatabaseManager.tasksUpcoming.length})";
+        break;
+      case TaskType.repeating:
+        // text = "Repeating (${DatabaseManager.tasksRepeating.length})";
+        break;
+    }
+
+    return Text(
+      text,
+      style: TextStyle(
+        fontFamily: fontfamily,
+        color: textDark.withOpacity(0.7),
+        fontSize: 18.0,
+      ),
+    );
+  }
+
+  Widget tasksHeaderMore(int index, Function onClick) {
+    return MouseRegion(
+      onEnter: (event) {
+        setState(() {
+          hoveringTasksMoreOptions = index;
+        });
+      },
+      onExit: (event) {
+        setState(() {
+          hoveringTasksMoreOptions = -1;
+        });
+      },
+      child: GestureDetector(
+        onTap: onClick(),
+        child: Container(
+          padding: const EdgeInsets.all(6.0),
+          decoration: BoxDecoration(
+            color:
+                hoveringTasksMoreOptions == index ? accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(24.0),
+          ),
+          child: Icon(
+            Icons.more_horiz_rounded,
+            color: textDark.withOpacity(0.7),
+            size: 26.0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget taskBuilder(TaskType taskType) {
+    int length = taskType == TaskType.today
+        ? DatabaseManager.tasksToday.length
+        : taskType == TaskType.tomorrow
+            ? DatabaseManager.tasksTomorrow.length
+            : DatabaseManager.tasksUpcoming.length;
+
+    if (length == 0) {
+      String noTasksMessage = "all tasks completed 🚀";
+
+      // if (taskType == TaskType.today) {
+      //   List<String> noTasksMessages = [
+      //     "all tasks completed 🚀",
+      //     "no more tasks here 🚀",
+      //     "you're all set 🥳",
+      //   ];
+      //   noTasksMessage =
+      //       noTasksMessages[Random().nextInt(noTasksMessages.length)];
+      // } else if (taskType == TaskType.tomorrow) {
+      //   List<String> noTasksMessages = [
+      //     "no plans for tomorrow 🚀",
+      //   ];
+      //   noTasksMessage =
+      //       noTasksMessages[Random().nextInt(noTasksMessages.length)];
+      // } else if (taskType == TaskType.upcoming) {
+      //   noTasksMessage = "no tasks scheduled 🚀";
+      // }
+
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
               Text(
-                "Upcoming (${DatabaseManager.tasksUpcoming.length})",
+                noTasksMessage,
                 style: TextStyle(
                   fontFamily: fontfamily,
-                  color: textDark,
-                  fontSize: 20.0,
-                ),
-              ),
-              Expanded(child: Container()),
-              MouseRegion(
-                onEnter: (event) {
-                  setState(() {
-                    isHoveringUpcomingTasksMoreOptions = true;
-                  });
-                },
-                onExit: (event) {
-                  setState(() {
-                    isHoveringUpcomingTasksMoreOptions = false;
-                  });
-                },
-                child: GestureDetector(
-                  child: Container(
-                    padding: EdgeInsets.all(6.0),
-                    decoration: BoxDecoration(
-                      color: isHoveringUpcomingTasksMoreOptions
-                          ? accent
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      color: textDark,
-                      size: 26.0,
-                    ),
-                  ),
-                  onTap: () {
-                    // TODO upcoming tasks options
-                  },
+                  color: textDark.withOpacity(0.3),
+                  fontSize: 16.0,
                 ),
               ),
             ],
           ),
         ),
+      );
+    }
+
+    return Expanded(
+      child: ListView.builder(
+        itemCount: length,
+        itemBuilder: (BuildContext context, int index) {
+          return taskWidget(
+            taskType == TaskType.today
+                ? DatabaseManager.tasksToday[index]
+                : taskType == TaskType.tomorrow
+                    ? DatabaseManager.tasksTomorrow[index]
+                    : DatabaseManager.tasksUpcoming[index],
+            taskType,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget taskWidget(TaskItem taskItem, TaskType taskType) {
+    return Column(
+      children: [
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onDoubleTap: () {
+              // TODO: task done
+            },
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  Container(width: 2.0),
+                  GestureDetector(
+                    child: Icon(
+                      Icons.drag_indicator_outlined,
+                      color: textDark.withOpacity(0.7),
+                      size: 18.0,
+                    ),
+                  ),
+                  Container(width: 4.0),
+                  Expanded(
+                    child: Text(
+                      taskItem.task,
+                      style: TextStyle(
+                        fontFamily: fontfamily,
+                        color: taskCategoryColors[taskItem.colorIndex],
+                        fontSize: 16.0,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    getStringFromMinutes(taskItem.minsRequired),
+                    style: TextStyle(
+                      fontFamily: fontfamily,
+                      color: textDark.withOpacity(0.7),
+                      fontSize: 12.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        tasksDivider(),
       ],
     );
+  }
+
+  Widget tasksDivider() {
+    return Container(
+      height: 1.0,
+      color: textDark.withOpacity(0.1),
+    );
+  }
+
+  String getStringFromMinutes(int minutes) {
+    int hours = minutes ~/ 60;
+    int mins = minutes % 60;
+
+    String out = "";
+
+    if (hours > 0) {
+      out += "$hours h ";
+    }
+    if (mins > 0) {
+      out += "$mins m";
+    }
+
+    return out;
   }
 }

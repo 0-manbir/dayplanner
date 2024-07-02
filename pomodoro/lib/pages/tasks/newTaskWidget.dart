@@ -84,6 +84,12 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
                   ],
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.all(4.0),
+                width: constraints.maxWidth,
+                height: 30,
+                child: taskColor(),
+              ),
             ],
           );
         },
@@ -196,15 +202,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
         padding: const EdgeInsets.all(4.0),
         child: GestureDetector(
           onTap: () {
-            // TODO add button clicked
-            // TaskItem newTask = TaskItem(
-            //   task: "",
-            //   minsRequired: 0,
-            //   taskType: TaskType.upcoming,
-            //   isDone: false,
-            // );
-            // tasksUpcoming.add(newTask);
-            // saveDataLocal();
+            addTask();
           },
           child: Icon(
             Icons.today,
@@ -237,11 +235,46 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
     if (newTaskController.text == "") {
       return;
     }
-    String newTask = TaskItem(
+    TaskItem newTask = TaskItem(
       task: newTaskController.text,
       minsRequired: getMinutesFromIndex(_selectedTimeIndex),
       taskType: TaskType.today,
+      colorIndex: _selectedColorIndex,
       isDone: false,
-    ).toJson();
+    );
+    DatabaseManager.saveData(newTask);
+  }
+
+  int _selectedColorIndex = 0;
+
+  Widget taskColor() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: taskCategoryColors.length,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedColorIndex = index;
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.all(4.0),
+            width: 30.0,
+            height: 30.0,
+            decoration: BoxDecoration(
+              color: taskCategoryColors[index],
+              borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(
+                color: _selectedColorIndex == index
+                    ? textDark.withOpacity(0.6)
+                    : textDark.withOpacity(0.1),
+                width: 3,
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
