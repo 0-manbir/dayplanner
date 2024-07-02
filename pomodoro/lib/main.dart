@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
+import 'package:pomodoro/variables/integers.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -104,12 +105,21 @@ class _MyAppState extends State<MyApp> {
   Widget newSession() {
     return Column(
       children: [
+        // TODO day planner
         Expanded(
           child: Container(),
         ),
-        const NewTaskWidget(),
+        NewTaskWidget(
+          notifyParent: refresh,
+        ),
       ],
     );
+  }
+
+  void refresh() {
+    setState(() {
+      DatabaseManager.loadData();
+    });
   }
 
   int hoveringTasksMoreOptions = -1;
@@ -322,10 +332,13 @@ class _MyAppState extends State<MyApp> {
                   Expanded(
                     child: Text(
                       taskItem.task,
+                      maxLines: maxLinesTaskView,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: fontfamily,
                         color: taskCategoryColors[taskItem.colorIndex],
                         fontSize: 16.0,
+                        height: 1,
                       ),
                     ),
                   ),
@@ -361,10 +374,10 @@ class _MyAppState extends State<MyApp> {
     String out = "";
 
     if (hours > 0) {
-      out += "$hours h ";
+      out += "${hours}h ";
     }
     if (mins > 0) {
-      out += "$mins m";
+      out += "${mins}m";
     }
 
     return out;

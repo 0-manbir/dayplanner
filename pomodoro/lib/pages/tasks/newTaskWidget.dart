@@ -7,7 +7,8 @@ import 'package:pomodoro/variables/colors.dart';
 import 'package:pomodoro/variables/strings.dart';
 
 class NewTaskWidget extends StatefulWidget {
-  const NewTaskWidget({super.key});
+  final Function notifyParent;
+  const NewTaskWidget({super.key, required this.notifyParent});
 
   @override
   State<NewTaskWidget> createState() => _NewTaskWidgetState();
@@ -101,8 +102,6 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
   Widget taskName() {
     return TextField(
       controller: newTaskController,
-      maxLines: null,
-      keyboardType: TextInputType.multiline,
       cursorColor: textDark,
       style: const TextStyle(
         fontFamily: fontfamily,
@@ -117,7 +116,24 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
           fontSize: 18.0,
         ),
       ),
-      onSubmitted: (value) {},
+      onSubmitted: (value) async {
+        if (value.isNotEmpty) {
+          // TODO
+          // parse value for valueable strings
+          // await addTask(
+          //   newTaskController.text,
+          //   getMinutesFromIndex(_selectedTimeIndex),
+          //   TaskType.today,
+          //   _selectedColorIndex,
+          // );
+
+          newTaskController.clear();
+          setState(() {
+            _selectedTimeIndex = 5;
+            _selectedColorIndex = 0;
+          });
+        }
+      },
     );
   }
 
@@ -162,7 +178,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
         onTap: () {
           setState(() {
             if (isLeft) {
-              if (_selectedTimeIndex != 1) {
+              if (_selectedTimeIndex != 0) {
                 _selectedTimeIndex--;
               }
             } else {
@@ -201,8 +217,19 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
       child: Container(
         padding: const EdgeInsets.all(4.0),
         child: GestureDetector(
-          onTap: () {
-            addTask();
+          onTap: () async {
+            await addTask(
+              newTaskController.text,
+              getMinutesFromIndex(_selectedTimeIndex),
+              TaskType.today,
+              _selectedColorIndex,
+              false,
+            );
+            newTaskController.clear();
+            setState(() {
+              _selectedTimeIndex = 5;
+              _selectedColorIndex = 0;
+            });
           },
           child: Icon(
             Icons.today,
@@ -231,18 +258,20 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
     );
   }
 
-  void addTask() {
-    if (newTaskController.text == "") {
+  Future<void> addTask(String taskName, int mins, TaskType taskType,
+      int colorIndex, bool isDone) async {
+    if (taskName == "") {
       return;
     }
     TaskItem newTask = TaskItem(
-      task: newTaskController.text,
-      minsRequired: getMinutesFromIndex(_selectedTimeIndex),
-      taskType: TaskType.today,
-      colorIndex: _selectedColorIndex,
-      isDone: false,
+      task: taskName,
+      minsRequired: mins,
+      taskType: taskType,
+      colorIndex: colorIndex,
+      isDone: isDone,
     );
-    DatabaseManager.saveData(newTask);
+    await DatabaseManager.saveData(newTask);
+    widget.notifyParent();
   }
 
   int _selectedColorIndex = 0;

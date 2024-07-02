@@ -34,6 +34,9 @@ class DatabaseManager {
   }
 
   static Future<void> loadData() async {
+    tasksToday.clear();
+    tasksTomorrow.clear();
+    tasksUpcoming.clear();
     if (onlineMode) {
       await loadDataSupabase();
     } else {
