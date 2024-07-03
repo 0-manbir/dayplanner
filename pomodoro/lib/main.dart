@@ -186,16 +186,15 @@ class _MyAppState extends State<MyApp> {
 
     switch (taskType) {
       case TaskType.today:
-        text = "Today (${DatabaseManager.tasksToday.length})";
+        text =
+            "Today (${DatabaseManager.tasksTodayLeft} left • ${getStringFromMinutes(DatabaseManager.tasksTodayDurationMinutes)})";
         break;
       case TaskType.tomorrow:
-        text = "Tomorrow (${DatabaseManager.tasksTomorrow.length})";
+        text =
+            "Tomorrow (${DatabaseManager.tasksTomorrowLeft} left • ${getStringFromMinutes(DatabaseManager.tasksTomorrowDurationMinutes)})";
         break;
       case TaskType.upcoming:
         text = "Upcoming (${DatabaseManager.tasksUpcoming.length})";
-        break;
-      case TaskType.repeating:
-        // text = "Repeating (${DatabaseManager.tasksRepeating.length})";
         break;
     }
 
@@ -312,45 +311,59 @@ class _MyAppState extends State<MyApp> {
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onDoubleTap: () {
-              // TODO: task done
+            onDoubleTap: () async {
+              await DatabaseManager.taskCompletionState(taskItem.toJson());
+              setState(() {
+                DatabaseManager.loadData();
+              });
             },
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              child: Row(
-                children: [
-                  Container(width: 2.0),
-                  GestureDetector(
-                    child: Icon(
-                      Icons.drag_indicator_outlined,
-                      color: textDark.withOpacity(0.7),
-                      size: 18.0,
-                    ),
-                  ),
-                  Container(width: 4.0),
-                  Expanded(
-                    child: Text(
-                      taskItem.task,
-                      maxLines: maxLinesTaskView,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: fontfamily,
-                        color: taskCategoryColors[taskItem.colorIndex],
-                        fontSize: 16.0,
-                        height: 1,
+            child: Tooltip(
+              waitDuration: taskHoverDuration,
+              preferBelow: false,
+              decoration: BoxDecoration(color: textDark.withOpacity(0.35)),
+              message: taskItem.task,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                child: Row(
+                  children: [
+                    Container(width: 2.0),
+                    GestureDetector(
+                      child: Icon(
+                        Icons.drag_indicator_outlined,
+                        color: textDark.withOpacity(0.7),
+                        size: 18.0,
                       ),
                     ),
-                  ),
-                  Text(
-                    getStringFromMinutes(taskItem.minsRequired),
-                    style: TextStyle(
-                      fontFamily: fontfamily,
-                      color: textDark.withOpacity(0.7),
-                      fontSize: 12.0,
+                    Container(width: 4.0),
+                    Expanded(
+                      child: Text(
+                        taskItem.task,
+                        maxLines: maxLinesTaskView,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: fontfamily,
+                          color: taskCategoryColors[taskItem.colorIndex],
+                          fontSize: 16.0,
+                          height: 1,
+                          decoration: taskItem.isDone
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                          decorationColor:
+                              taskCategoryColors[taskItem.colorIndex],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      getStringFromMinutes(taskItem.minsRequired),
+                      style: TextStyle(
+                        fontFamily: fontfamily,
+                        color: textDark.withOpacity(0.7),
+                        fontSize: 12.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

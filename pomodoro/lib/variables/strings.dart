@@ -12,3 +12,7 @@ const String prefsAnonKey = "anon";
 const String prefsTasksTodayName = "tasksToday";
 const String prefsTasksTomorrowName = "tasksTomorrow";
 const String prefsTasksUpcomingName = "tasksUpcoming";
+
+
+// Task Input Example
+// new task 15 tomorrow tag1

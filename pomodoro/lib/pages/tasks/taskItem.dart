@@ -46,5 +46,4 @@ enum TaskType {
   today,
   tomorrow,
   upcoming,
-  repeating,
 }

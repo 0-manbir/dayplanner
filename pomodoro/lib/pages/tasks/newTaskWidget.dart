@@ -100,40 +100,81 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
   }
 
   Widget taskName() {
-    return TextField(
-      controller: newTaskController,
-      cursorColor: textDark,
-      style: const TextStyle(
-        fontFamily: fontfamily,
-        color: textDark,
-        fontSize: 18.0,
-      ),
-      decoration: InputDecoration(
-        hintText: "new task (ctrl + n)",
-        hintStyle: TextStyle(
+    return Tooltip(
+      message: "task prototype:\n[task name] [150]m upcoming tag[0]",
+      preferBelow: false,
+      child: TextField(
+        controller: newTaskController,
+        cursorColor: textDark,
+        style: const TextStyle(
           fontFamily: fontfamily,
-          color: textDark.withOpacity(0.25),
+          color: textDark,
           fontSize: 18.0,
         ),
-      ),
-      onSubmitted: (value) async {
-        if (value.isNotEmpty) {
-          // TODO
-          // parse value for valueable strings
-          // await addTask(
-          //   newTaskController.text,
-          //   getMinutesFromIndex(_selectedTimeIndex),
-          //   TaskType.today,
-          //   _selectedColorIndex,
-          // );
+        decoration: InputDecoration(
+          hintText: "new task (ctrl + n)",
+          hintStyle: TextStyle(
+            fontFamily: fontfamily,
+            color: textDark.withOpacity(0.25),
+            fontSize: 18.0,
+          ),
+        ),
+        onSubmitted: (value) async {
+          List<String> words = value.split(" ");
+          TaskType newTaskType = TaskType.today;
+          int newColorIndex = 0;
+          int newTaskMinutes = getMinutesFromIndex(_selectedTimeIndex);
+          String newTaskName = "";
 
-          newTaskController.clear();
-          setState(() {
-            _selectedTimeIndex = 5;
-            _selectedColorIndex = 0;
-          });
-        }
-      },
+          if (value.isNotEmpty) {
+            for (String word in words) {
+              if (word.toLowerCase() == "tomorrow") {
+                newTaskType = TaskType.tomorrow;
+                continue;
+              } else if (word.toLowerCase() == "upcoming") {
+                newTaskType = TaskType.upcoming;
+                continue;
+              } else if (word.toLowerCase().startsWith("tag") &&
+                  word.length == 4) {
+                try {
+                  newColorIndex = int.parse(word[3]) - 1;
+                  if (newColorIndex > 5) {
+                    newColorIndex = _selectedColorIndex;
+                  }
+                } catch (e) {
+                  newColorIndex = _selectedColorIndex;
+                }
+                continue;
+              } else if (word.endsWith("m")) {
+                try {
+                  newTaskMinutes =
+                      int.parse(word.substring(0, word.length - 1));
+                  continue;
+                } catch (e) {
+                  // newTaskMinutes = getMinutesFromIndex(_selectedTimeIndex);
+                }
+              }
+
+              newTaskName += " $word";
+            }
+            newTaskName.trim();
+
+            await addTask(
+              newTaskName,
+              newTaskMinutes,
+              newTaskType,
+              newColorIndex,
+              false,
+            );
+
+            newTaskController.clear();
+            setState(() {
+              _selectedTimeIndex = 5;
+              _selectedColorIndex = 0;
+            });
+          }
+        },
+      ),
     );
   }
 
