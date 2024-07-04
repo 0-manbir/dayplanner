@@ -123,6 +123,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   int hoveringTasksMoreOptions = -1;
+  int droppingTaskType = -1;
 
   Widget tasksToday() {
     return Column(
@@ -137,9 +138,50 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
-        tasksDivider(),
+        tasksDivider(false),
         taskBuilder(TaskType.today),
+        DragTarget(
+          builder: (BuildContext context, List<Object?> candidateData,
+              List<dynamic> rejectedData) {
+            return droppingTaskType == 0 ? dropHereWidget() : Container();
+          },
+          onAcceptWithDetails: (details) {
+            setState(() {
+              droppingTaskType = -1;
+            });
+            // TODO add task at start of taskType today
+          },
+          onWillAcceptWithDetails: (details) {
+            droppingTaskType = 0;
+            return true;
+          },
+          onLeave: (data) {
+            droppingTaskType = -1;
+          },
+        ),
       ],
+    );
+  }
+
+// TODO fix this
+  Widget dropHereWidget() {
+    return Center(
+      child: Container(
+        color: textDark.withOpacity(0.2),
+        height: 100,
+        width: 100,
+        child: const Center(
+          child: Text(
+            "Drop here",
+            style: TextStyle(
+              fontFamily: fontfamily,
+              color: Colors.black54,
+              fontSize: 16.0,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -156,7 +198,7 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
-        tasksDivider(),
+        tasksDivider(false),
         taskBuilder(TaskType.tomorrow),
       ],
     );
@@ -175,7 +217,7 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
-        tasksDivider(),
+        tasksDivider(false),
         taskBuilder(TaskType.upcoming),
       ],
     );
@@ -305,78 +347,128 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  String highlightedTaskName = "";
+
   Widget taskWidget(TaskItem taskItem, TaskType taskType) {
-    return Column(
-      children: [
-        MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onDoubleTap: () async {
-              await DatabaseManager.taskCompletionState(taskItem.toJson());
-              setState(() {
-                DatabaseManager.loadData();
-              });
-            },
-            child: Tooltip(
-              waitDuration: taskHoverDuration,
-              preferBelow: false,
-              decoration: BoxDecoration(color: textDark.withOpacity(0.35)),
-              message: taskItem.task,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                child: Row(
-                  children: [
-                    Container(width: 2.0),
-                    GestureDetector(
-                      child: Icon(
-                        Icons.drag_indicator_outlined,
-                        color: textDark.withOpacity(0.7),
-                        size: 18.0,
-                      ),
-                    ),
-                    Container(width: 4.0),
-                    Expanded(
-                      child: Text(
-                        taskItem.task,
-                        maxLines: maxLinesTaskView,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: fontfamily,
-                          color: taskCategoryColors[taskItem.colorIndex],
-                          fontSize: 16.0,
-                          height: 1,
-                          decoration: taskItem.isDone
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                          decorationColor:
-                              taskCategoryColors[taskItem.colorIndex],
-                        ),
-                      ),
-                    ),
-                    Text(
-                      getStringFromMinutes(taskItem.minsRequired),
-                      style: TextStyle(
-                        fontFamily: fontfamily,
-                        color: textDark.withOpacity(0.7),
-                        fontSize: 12.0,
-                      ),
-                    ),
-                  ],
-                ),
+    return DragTarget<TaskItem>(
+      builder: (BuildContext context, List<Object?> candidateData,
+          List<dynamic> rejectedData) {
+        return Draggable<TaskItem>(
+          data: taskItem,
+          feedback: SizedBox(
+            height: 30,
+            width: 250,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(100, 207, 207, 207),
+                borderRadius: BorderRadius.circular(12.0),
               ),
+              child: taskWidgetRowView(taskItem),
             ),
           ),
-        ),
-        tasksDivider(),
-      ],
+          childWhenDragging: Container(),
+          child: Column(
+            children: [
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onDoubleTap: () async {
+                    await DatabaseManager.taskCompletionState(
+                        taskItem.toJson());
+                    setState(() {
+                      DatabaseManager.loadData();
+                    });
+                  },
+                  child: Tooltip(
+                    waitDuration: taskHoverDuration,
+                    preferBelow: false,
+                    decoration:
+                        BoxDecoration(color: textDark.withOpacity(0.35)),
+                    message: taskItem.task,
+                    child: Container(
+                      child: taskWidgetRowView(taskItem),
+                    ),
+                  ),
+                ),
+              ),
+              tasksDivider(highlightedTaskName == taskItem.task),
+            ],
+          ),
+        );
+      },
+      onWillAcceptWithDetails: (data) {
+        if (highlightedTaskName != taskItem.task) {
+          setState(() {
+            highlightedTaskName = taskItem.task;
+          });
+        }
+        return true;
+      },
+      onAcceptWithDetails: (data) {
+        // TODO update database
+        setState(() {
+          highlightedTaskName = "";
+        });
+      },
+      onLeave: (data) {
+        setState(() {
+          highlightedTaskName = "";
+        });
+      },
     );
   }
 
-  Widget tasksDivider() {
+  Widget taskWidgetRowView(TaskItem taskItem) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      child: Row(
+        children: [
+          Container(width: 2.0),
+          GestureDetector(
+            child: Icon(
+              Icons.drag_indicator_outlined,
+              color: textDark.withOpacity(0.7),
+              size: 18.0,
+            ),
+          ),
+          Container(width: 4.0),
+          Expanded(
+            child: Text(
+              taskItem.task,
+              maxLines: maxLinesTaskView,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: fontfamily,
+                color: taskCategoryColors[taskItem.colorIndex],
+                fontSize: 16.0,
+                fontWeight: FontWeight.normal,
+                height: 1,
+                decoration: taskItem.isDone
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+                decorationColor: taskCategoryColors[taskItem.colorIndex],
+              ),
+            ),
+          ),
+          Text(
+            getStringFromMinutes(taskItem.minsRequired),
+            style: TextStyle(
+              fontFamily: fontfamily,
+              decoration: TextDecoration.none,
+              fontWeight: FontWeight.normal,
+              color: textDark.withOpacity(0.7),
+              fontSize: 12.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget tasksDivider(bool isHighlighted) {
     return Container(
       height: 1.0,
-      color: textDark.withOpacity(0.1),
+      color: isHighlighted ? primary : textDark.withOpacity(0.1),
     );
   }
 
