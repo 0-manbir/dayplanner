@@ -96,7 +96,6 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
         },
       ),
     );
-    ;
   }
 
   Widget taskName() {
@@ -286,14 +285,9 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
       cursor: SystemMouseCursors.click,
       child: Container(
         padding: const EdgeInsets.all(4.0),
-        child: GestureDetector(
-          onTap: () {
-            // TODO drag task button clicked
-          },
-          child: Icon(
-            Icons.drag_indicator_rounded,
-            color: textDark.withOpacity(0.5),
-          ),
+        child: Icon(
+          Icons.drag_indicator_rounded,
+          color: textDark.withOpacity(0.5),
         ),
       ),
     );

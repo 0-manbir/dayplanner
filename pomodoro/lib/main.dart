@@ -165,7 +165,7 @@ class _MyAppState extends State<MyApp> {
 
 // TODO fix this
   Widget dropHereWidget() {
-    return Center(
+    return Expanded(
       child: Container(
         color: textDark.withOpacity(0.2),
         height: 100,
@@ -405,8 +405,10 @@ class _MyAppState extends State<MyApp> {
         return true;
       },
       onAcceptWithDetails: (data) {
-        // TODO update database
+        DatabaseManager.reorderTask(data.data, taskItem);
+
         setState(() {
+          DatabaseManager.loadData();
           highlightedTaskName = "";
         });
       },

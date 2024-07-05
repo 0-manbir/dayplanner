@@ -56,34 +56,58 @@ class DatabaseManager {
     tasksTomorrowLeft = 0;
     tasksTodayDurationMinutes = 0;
     tasksTomorrowDurationMinutes = 0;
+
+    // Load and process tasks for today
     if (prefs.containsKey(prefsTasksTodayName)) {
+      List<TaskItem> todayTasks = [];
+      List<TaskItem> doneTodayTasks = [];
       for (String taskJson in prefs.getStringList(prefsTasksTodayName)!) {
         localDataTaskItem = TaskItem.fromJson(jsonDecode(taskJson));
-        tasksToday.add(localDataTaskItem);
         if (!localDataTaskItem.isDone) {
           tasksTodayDurationMinutes += localDataTaskItem.minsRequired;
           tasksTodayLeft++;
+          todayTasks.add(localDataTaskItem);
+        } else {
+          doneTodayTasks.add(localDataTaskItem);
         }
       }
+      tasksToday = todayTasks + doneTodayTasks;
     } else {
       prefs.setStringList(prefsTasksTodayName, []);
     }
+
+    // Load and process tasks for tomorrow
     if (prefs.containsKey(prefsTasksTomorrowName)) {
+      List<TaskItem> tomorrowTasks = [];
+      List<TaskItem> doneTomorrowTasks = [];
       for (String taskJson in prefs.getStringList(prefsTasksTomorrowName)!) {
         localDataTaskItem = TaskItem.fromJson(jsonDecode(taskJson));
-        tasksTomorrow.add(localDataTaskItem);
         if (!localDataTaskItem.isDone) {
           tasksTomorrowDurationMinutes += localDataTaskItem.minsRequired;
           tasksTomorrowLeft++;
+          tomorrowTasks.add(localDataTaskItem);
+        } else {
+          doneTomorrowTasks.add(localDataTaskItem);
         }
       }
+      tasksTomorrow = tomorrowTasks + doneTomorrowTasks;
     } else {
       prefs.setStringList(prefsTasksTomorrowName, []);
     }
+
+    // Load and process upcoming tasks
     if (prefs.containsKey(prefsTasksUpcomingName)) {
+      List<TaskItem> upcomingTasks = [];
+      List<TaskItem> doneUpcomingTasks = [];
       for (String taskJson in prefs.getStringList(prefsTasksUpcomingName)!) {
-        tasksUpcoming.add(TaskItem.fromJson(jsonDecode(taskJson)));
+        localDataTaskItem = TaskItem.fromJson(jsonDecode(taskJson));
+        if (!localDataTaskItem.isDone) {
+          upcomingTasks.add(localDataTaskItem);
+        } else {
+          doneUpcomingTasks.add(localDataTaskItem);
+        }
       }
+      tasksUpcoming = upcomingTasks + doneUpcomingTasks;
     } else {
       prefs.setStringList(prefsTasksUpcomingName, []);
     }
@@ -103,11 +127,9 @@ class DatabaseManager {
     // if it does, append (1) to its name
     // TODO TEST THIS
 
-    for (TaskItem task in taskItem.taskType == TaskType.today
-        ? tasksToday
-        : (taskItem.taskType == TaskType.tomorrow
-            ? tasksTomorrow
-            : tasksUpcoming)) {
+    TaskItem updatedTaskItem = taskItem;
+
+    for (TaskItem task in _getTaskList(taskItem.taskType)) {
       if (task.task == taskItem.task) {
         int number = 1;
         if (task.task.endsWith(")")) {
@@ -117,18 +139,16 @@ class DatabaseManager {
           } catch (e) {
             number = 1;
           }
-        } else {
-          taskItem.task += " ($number)";
         }
-
+        updatedTaskItem.task += " ($number)";
         break;
       }
     }
 
     if (onlineMode) {
-      await saveDataSupabase(taskItem);
+      await saveDataSupabase(updatedTaskItem);
     } else {
-      await saveDataLocal(taskItem);
+      await saveDataLocal(updatedTaskItem);
     }
   }
 
@@ -160,20 +180,22 @@ class DatabaseManager {
     // TODO Implement Supabase data saving logic here
   }
 
-  static Future<void> updateDatabase(
+  static Future<void> updateDatabaseTaskDone(
     TaskType taskType,
     int index,
     String updatedTaskJSON,
     bool appendAtEnd,
   ) async {
     if (onlineMode) {
-      await updateDataSupabase(taskType, index, updatedTaskJSON, appendAtEnd);
+      await updateDataTaskDoneSupabase(
+          taskType, index, updatedTaskJSON, appendAtEnd);
     } else {
-      await updateDataLocal(taskType, index, updatedTaskJSON, appendAtEnd);
+      await updateDataTaskDoneLocal(
+          taskType, index, updatedTaskJSON, appendAtEnd);
     }
   }
 
-  static Future<void> updateDataLocal(
+  static Future<void> updateDataTaskDoneLocal(
     TaskType taskType,
     int index,
     String updatedTaskJSON,
@@ -208,13 +230,13 @@ class DatabaseManager {
     prefs.setStringList(prefsTasksName, listToUpdate);
   }
 
-  static Future<void> updateDataSupabase(
+  static Future<void> updateDataTaskDoneSupabase(
     TaskType taskType,
     int index,
     String updatedTaskJSON,
     bool appendAtEnd,
   ) async {
-    // TODO Implement Supabase data updation logic here
+    // TODO Implement Supabase data updation upon task item done logic here
   }
 
   static Future<void> taskCompletionState(String taskJSON) async {
@@ -225,11 +247,7 @@ class DatabaseManager {
     int index = 0;
     String updatedTaskString = taskJSON;
 
-    for (TaskItem task in taskItem.taskType == TaskType.today
-        ? tasksToday
-        : (taskItem.taskType == TaskType.tomorrow
-            ? tasksTomorrow
-            : tasksUpcoming)) {
+    for (TaskItem task in _getTaskList(taskItem.taskType)) {
       if (task.task == taskItem.task) {
         task.isDone = !task.isDone;
         updatedTaskString = task.toJson();
@@ -238,6 +256,52 @@ class DatabaseManager {
       index++;
     }
 
-    updateDatabase(taskItem.taskType, index, updatedTaskString, true);
+    updateDatabaseTaskDone(taskItem.taskType, index, updatedTaskString, true);
+  }
+
+  static Future<void> reorderTask(
+      TaskItem taskItem, TaskItem targetTaskItem) async {
+    TaskType fromTaskType = taskItem.taskType;
+    TaskType toTaskType = targetTaskItem.taskType;
+
+    // Remove the task from the original list
+    List<TaskItem> fromList = _getTaskList(fromTaskType);
+    fromList.remove(taskItem);
+
+    // Add the task to the new list at the specified position
+    List<TaskItem> toList = _getTaskList(toTaskType);
+    int targetIndex = toList.indexOf(targetTaskItem) + 1;
+    toList.insert(targetIndex, taskItem);
+
+    // Update SharedPreferences
+    await _updatePrefs(fromTaskType, fromList);
+    await _updatePrefs(toTaskType, toList);
+  }
+
+  static Future<void> _updatePrefs(
+      TaskType taskType, List<TaskItem> taskList) async {
+    String prefsTasksName;
+
+    if (taskType == TaskType.today) {
+      prefsTasksName = prefsTasksTodayName;
+    } else if (taskType == TaskType.tomorrow) {
+      prefsTasksName = prefsTasksTomorrowName;
+    } else {
+      prefsTasksName = prefsTasksUpcomingName;
+    }
+
+    List<String> taskListJson = taskList.map((task) => task.toJson()).toList();
+    await prefs.setStringList(prefsTasksName, taskListJson);
+  }
+
+  static List<TaskItem> _getTaskList(TaskType taskType) {
+    switch (taskType) {
+      case TaskType.today:
+        return tasksToday;
+      case TaskType.tomorrow:
+        return tasksTomorrow;
+      case TaskType.upcoming:
+        return tasksUpcoming;
+    }
   }
 }
