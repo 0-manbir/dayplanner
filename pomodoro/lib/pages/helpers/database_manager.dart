@@ -122,7 +122,7 @@ class DatabaseManager {
     // TODO Implement Supabase data loading logic here
   }
 
-  static Future<void> saveData(TaskItem taskItem) async {
+  /* static Future<void> saveData1(TaskItem taskItem) async {
     // check if task already exists (with the same taskName).
     // if it does, append (1) to its name
     // TODO TEST THIS
@@ -178,6 +178,78 @@ class DatabaseManager {
 
   static Future<void> saveDataSupabase(TaskItem taskItem) async {
     // TODO Implement Supabase data saving logic here
+  }
+*/
+
+  static Future<void> addTask(TaskItem taskItem, TaskType taskType) async {
+    if (onlineMode) {
+      return addTaskSupabase(taskItem, taskType);
+    } else {
+      return addTaskLocal(taskItem, taskType);
+    }
+  }
+
+  static Future<void> addTaskSupabase(
+      TaskItem taskItem, TaskType taskType) async {
+    // TODO Implement Supabase data saving logic here
+  }
+  static Future<void> addTaskLocal(TaskItem taskItem, TaskType taskType) async {
+    if (_getTaskList(taskType).contains(taskItem)) {
+      return;
+    }
+
+    TaskItem updatedItem = taskItem;
+    updatedItem.taskType = taskType;
+    updatedItem.task = updatedItem.task.trim();
+
+    String task = updatedItem.toJson();
+    String prefsTasksName;
+
+    if (taskType == TaskType.today) {
+      tasksToday.add(updatedItem);
+      prefsTasksName = prefsTasksTodayName;
+    } else if (taskType == TaskType.tomorrow) {
+      tasksTomorrow.add(updatedItem);
+      prefsTasksName = prefsTasksTomorrowName;
+    } else if (taskType == TaskType.upcoming) {
+      tasksUpcoming.add(updatedItem);
+      prefsTasksName = prefsTasksUpcomingName;
+    } else {
+      prefsTasksName = prefsTasksTodayName;
+    }
+
+    List<String> temp = prefs.getStringList(prefsTasksName)!;
+    temp.add(task);
+    prefs.setStringList(prefsTasksName, temp);
+  }
+
+  static Future<void> removeTask(TaskItem taskItem, TaskType taskType) async {
+    if (onlineMode) {
+      return removeTaskSupabase(taskItem, taskType);
+    } else {
+      return removeTaskLocal(taskItem, taskType);
+    }
+  }
+
+  static Future<void> removeTaskSupabase(
+      TaskItem taskItem, TaskType taskType) async {
+    // TODO Implement Supabase data saving logic here
+  }
+  static Future<void> removeTaskLocal(
+      TaskItem taskItem, TaskType taskType) async {
+    try {
+      List<String> temp = prefs.getStringList(_getPrefsName(taskType))!;
+
+      for (String task in temp) {
+        if (TaskItem.fromJson(jsonDecode(task)).task == taskItem.task) {
+          temp.remove(task);
+          break;
+        }
+      }
+      prefs.setStringList(_getPrefsName(taskType), temp);
+    } catch (e) {
+      print("error in removing task");
+    }
   }
 
   static Future<void> updateDatabaseTaskDone(
@@ -302,6 +374,17 @@ class DatabaseManager {
         return tasksTomorrow;
       case TaskType.upcoming:
         return tasksUpcoming;
+    }
+  }
+
+  static String _getPrefsName(TaskType taskType) {
+    switch (taskType) {
+      case TaskType.today:
+        return prefsTasksTodayName;
+      case TaskType.tomorrow:
+        return prefsTasksTomorrowName;
+      case TaskType.upcoming:
+        return prefsTasksUpcomingName;
     }
   }
 }

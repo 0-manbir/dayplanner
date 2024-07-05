@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
 import 'package:pomodoro/pages/tasks/taskItem.dart';
 import 'package:pomodoro/variables/colors.dart';
@@ -16,6 +17,7 @@ class NewTaskWidget extends StatefulWidget {
 
 class _NewTaskWidgetState extends State<NewTaskWidget> {
   final TextEditingController newTaskController = TextEditingController();
+  FocusNode newTaskFocusNode = FocusNode();
 
   int _selectedTimeIndex = 5;
 
@@ -103,6 +105,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
       message: "task prototype:\n[task name] [150]m upcoming tag[0]",
       preferBelow: false,
       child: TextField(
+        focusNode: newTaskFocusNode,
         controller: newTaskController,
         cursorColor: textDark,
         style: const TextStyle(
@@ -127,7 +130,10 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
 
           if (value.isNotEmpty) {
             for (String word in words) {
-              if (word.toLowerCase() == "tomorrow") {
+              if (word.toLowerCase() == "today") {
+                newTaskType = TaskType.today;
+                continue;
+              } else if (word.toLowerCase() == "tomorrow") {
                 newTaskType = TaskType.tomorrow;
                 continue;
               } else if (word.toLowerCase() == "upcoming") {
@@ -140,10 +146,10 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
                   if (newColorIndex > 5) {
                     newColorIndex = _selectedColorIndex;
                   }
+                  continue;
                 } catch (e) {
                   newColorIndex = _selectedColorIndex;
                 }
-                continue;
               } else if (word.endsWith("m")) {
                 try {
                   newTaskMinutes =
@@ -305,8 +311,10 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
       colorIndex: colorIndex,
       isDone: isDone,
     );
-    await DatabaseManager.saveData(newTask);
+    await DatabaseManager.addTask(newTask, taskType);
     widget.notifyParent();
+
+    newTaskFocusNode.requestFocus();
   }
 
   int _selectedColorIndex = 0;

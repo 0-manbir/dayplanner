@@ -1,3 +1,3 @@
 const int maxLinesTaskView = 1;
 
-const Duration taskHoverDuration = Duration(seconds: 3);
+const Duration taskHoverDuration = Duration(seconds: 2);
