@@ -194,7 +194,7 @@ class DatabaseManager {
     // TODO Implement Supabase data saving logic here
   }
   static Future<void> addTaskLocal(TaskItem taskItem, TaskType taskType) async {
-    if (_getTaskList(taskType).contains(taskItem)) {
+    if (_getTaskList(taskType).contains(taskItem) || taskItem.task == "") {
       return;
     }
 
@@ -374,6 +374,8 @@ class DatabaseManager {
         return tasksTomorrow;
       case TaskType.upcoming:
         return tasksUpcoming;
+      case TaskType.forceadd:
+        return [];
     }
   }
 
@@ -385,6 +387,8 @@ class DatabaseManager {
         return prefsTasksTomorrowName;
       case TaskType.upcoming:
         return prefsTasksUpcomingName;
+      case TaskType.forceadd:
+        return "";
     }
   }
 }

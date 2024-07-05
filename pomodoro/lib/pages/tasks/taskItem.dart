@@ -46,4 +46,5 @@ enum TaskType {
   today,
   tomorrow,
   upcoming,
+  forceadd,
 }

@@ -219,7 +219,8 @@ class _MyAppState extends State<MyApp> {
   void onWidgetDrop(
       DragTargetDetails<TaskItem> data, TaskType dropInType) async {
     TaskItem taskItem = data.data;
-    if (data.data.taskType != dropInType) {
+    if (data.data.taskType != dropInType ||
+        data.data.taskType == TaskType.forceadd) {
       await DatabaseManager.removeTask(taskItem, taskItem.taskType);
       await DatabaseManager.addTask(taskItem, dropInType);
     }
@@ -263,6 +264,9 @@ class _MyAppState extends State<MyApp> {
         break;
       case TaskType.upcoming:
         text = "Upcoming (${DatabaseManager.tasksUpcoming.length})";
+        break;
+
+      case TaskType.forceadd:
         break;
     }
 

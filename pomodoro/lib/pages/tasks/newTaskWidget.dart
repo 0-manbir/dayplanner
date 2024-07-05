@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
 import 'package:pomodoro/pages/tasks/taskItem.dart';
 import 'package:pomodoro/variables/colors.dart';
+import 'package:pomodoro/variables/integers.dart';
 import 'package:pomodoro/variables/strings.dart';
 
 class NewTaskWidget extends StatefulWidget {
@@ -104,6 +105,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
     return Tooltip(
       message: "task prototype:\n[task name] [150]m upcoming tag[0]",
       preferBelow: false,
+      waitDuration: newTaskTooltipHoverDuration,
       child: TextField(
         focusNode: newTaskFocusNode,
         controller: newTaskController,
@@ -287,6 +289,64 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
   }
 
   Widget dragTaskButton() {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: newTaskController,
+      builder: (context, value, child) {
+        return Draggable<TaskItem>(
+          data: TaskItem(
+            task: value.text,
+            minsRequired: getMinutesFromIndex(_selectedTimeIndex),
+            taskType: TaskType.forceadd,
+            colorIndex: _selectedColorIndex,
+            isDone: false,
+          ),
+          feedback: SizedBox(
+            width: 250,
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              color: textLight.withOpacity(0.3),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.drag_indicator_outlined,
+                    color: textDark.withOpacity(0.7),
+                    size: 18.0,
+                  ),
+                  Container(width: 4.0),
+                  Expanded(
+                    child: Text(
+                      value.text,
+                      style: TextStyle(
+                        fontFamily: fontfamily,
+                        color: taskCategoryColors[_selectedColorIndex],
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.normal,
+                        height: 1,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    getStringFromIndex(_selectedTimeIndex),
+                    style: TextStyle(
+                      fontFamily: fontfamily,
+                      decoration: TextDecoration.none,
+                      fontWeight: FontWeight.normal,
+                      color: textDark.withOpacity(0.7),
+                      fontSize: 12.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          child: dragTaskButtonWidget(),
+        );
+      },
+    );
+  }
+
+  Widget dragTaskButtonWidget() {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Container(
