@@ -366,6 +366,28 @@ class DatabaseManager {
     await prefs.setStringList(prefsTasksName, taskListJson);
   }
 
+  static void removeDone(TaskType taskType) {
+    List<TaskItem> taskList = _getTaskList(taskType);
+    taskList.removeWhere((task) => task.isDone);
+    _updatePrefs(taskType, taskList);
+  }
+
+  static void removeAll(TaskType taskType) {
+    _updatePrefs(taskType, []);
+  }
+
+  static void markUndone(TaskType taskType) {
+    List<TaskItem> taskList = _getTaskList(taskType);
+
+    for (TaskItem task in taskList) {
+      if (task.isDone) {
+        task.isDone = false;
+      }
+    }
+
+    _updatePrefs(taskType, taskList);
+  }
+
   static List<TaskItem> _getTaskList(TaskType taskType) {
     switch (taskType) {
       case TaskType.today:

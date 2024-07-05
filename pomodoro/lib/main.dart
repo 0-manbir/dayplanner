@@ -122,8 +122,6 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  int hoveringTasksMoreOptions = -1;
-
   int willAcceptTaskIndex = -1;
 
   Widget tasksToday() {
@@ -141,7 +139,7 @@ class _MyAppState extends State<MyApp> {
                 children: [
                   tasksHeaderText(TaskType.today),
                   Expanded(child: Container()),
-                  tasksHeaderMore(0, () {}),
+                  tasksHeaderMore(0),
                 ],
               ),
             ),
@@ -171,7 +169,7 @@ class _MyAppState extends State<MyApp> {
                 children: [
                   tasksHeaderText(TaskType.tomorrow),
                   Expanded(child: Container()),
-                  tasksHeaderMore(1, () {}),
+                  tasksHeaderMore(1),
                 ],
               ),
             ),
@@ -201,7 +199,7 @@ class _MyAppState extends State<MyApp> {
                 children: [
                   tasksHeaderText(TaskType.upcoming),
                   Expanded(child: Container()),
-                  tasksHeaderMore(2, () {}),
+                  tasksHeaderMore(2),
                 ],
               ),
             ),
@@ -260,7 +258,7 @@ class _MyAppState extends State<MyApp> {
         break;
       case TaskType.tomorrow:
         text =
-            "Tomorrow (${DatabaseManager.tasksTomorrowLeft} left • ${totalMinutesTomorrow == "" ? "0m" : totalMinutesTomorrow})";
+            "Tomrw (${DatabaseManager.tasksTomorrowLeft} left • ${totalMinutesTomorrow == "" ? "0m" : totalMinutesTomorrow})";
         break;
       case TaskType.upcoming:
         text = "Upcoming (${DatabaseManager.tasksUpcoming.length})";
@@ -280,34 +278,75 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Widget tasksHeaderMore(int index, Function onClick) {
-    return MouseRegion(
-      onEnter: (event) {
-        setState(() {
-          hoveringTasksMoreOptions = index;
-        });
+  Widget tasksHeaderMore(int index) {
+    return PopupMenuButton<int>(
+      tooltip: "more settings",
+      color: background,
+      onSelected: (value) {
+        TaskType taskType = index == 0
+            ? TaskType.today
+            : (index == 1 ? TaskType.tomorrow : TaskType.upcoming);
+        switch (value) {
+          case 0:
+            DatabaseManager.removeDone(taskType);
+            setState(() {
+              DatabaseManager.loadData();
+            });
+            break;
+          case 1:
+            DatabaseManager.removeAll(taskType);
+            setState(() {
+              DatabaseManager.loadData();
+            });
+            break;
+          case 2:
+            DatabaseManager.markUndone(taskType);
+            setState(() {
+              DatabaseManager.loadData();
+            });
+            break;
+        }
       },
-      onExit: (event) {
-        setState(() {
-          hoveringTasksMoreOptions = -1;
-        });
-      },
-      child: GestureDetector(
-        onTap: onClick(),
-        child: Container(
-          padding: const EdgeInsets.all(6.0),
-          decoration: BoxDecoration(
-            color:
-                hoveringTasksMoreOptions == index ? accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(24.0),
-          ),
-          child: Icon(
-            Icons.more_horiz_rounded,
-            color: textDark.withOpacity(0.7),
-            size: 26.0,
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 0,
+          child: Text(
+            'Remove Done',
+            style: TextStyle(
+              fontFamily: fontfamily,
+              fontWeight: FontWeight.normal,
+              fontSize: 16.0,
+            ),
           ),
         ),
-      ),
+        const PopupMenuItem(
+          value: 1,
+          child: Text(
+            'Remove All',
+            style: TextStyle(
+              fontFamily: fontfamily,
+              fontWeight: FontWeight.normal,
+              fontSize: 16.0,
+            ),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 2,
+          child: Text(
+            'Mark All Undone',
+            style: TextStyle(
+              fontFamily: fontfamily,
+              fontWeight: FontWeight.normal,
+              fontSize: 16.0,
+            ),
+          ),
+        ),
+      ],
+      icon: Icon(
+        Icons.more_vert_rounded,
+        color: textDark.withOpacity(0.7),
+        size: 20.0,
+      ), // Icon for the button
     );
   }
 
