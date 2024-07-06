@@ -1,9 +1,8 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
-import 'package:pomodoro/pages/tasks/taskItem.dart';
+import 'package:pomodoro/pages/tasks/task_item.dart';
 import 'package:pomodoro/variables/colors.dart';
 import 'package:pomodoro/variables/integers.dart';
 import 'package:pomodoro/variables/strings.dart';
@@ -22,23 +21,6 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
 
   int _selectedTimeIndex = 5;
 
-  final Map<String, int> timeDragStrings = {
-    '1m': 1,
-    '5m': 5,
-    '10m': 10,
-    '15m': 15,
-    '20m': 20,
-    '25m': 25,
-    '30m': 30,
-    '45m': 45,
-    '1h': 60,
-    '1h 15m': 75,
-    '1h 30m': 90,
-    '2h': 120,
-    '2h 15m': 135,
-    '2h 30m': 150,
-  };
-
   String getStringFromIndex(int index) {
     return timeDragStrings.keys.elementAt(index);
   }
@@ -55,6 +37,8 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
   @override
   void dispose() {
     newTaskController.dispose();
+    newTaskFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -81,10 +65,11 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     taskTimeWidget(constraints.maxWidth),
-                    Container(width: 4.0),
+                    Expanded(child: Container()),
                     addTaskButton(),
                     Container(width: 4.0),
                     dragTaskButton(),
+                    Container(width: 4.0),
                   ],
                 ),
               ),
@@ -103,7 +88,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
 
   Widget taskName() {
     return Tooltip(
-      message: "task prototype:\n[task name] [150]m upcoming tag[0]",
+      message: newTaskTextFieldTooltip,
       preferBelow: false,
       waitDuration: newTaskTooltipHoverDuration,
       child: TextField(
@@ -116,7 +101,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
           fontSize: 18.0,
         ),
         decoration: InputDecoration(
-          hintText: "new task (ctrl + n)",
+          hintText: newTaskTextFieldHint,
           hintStyle: TextStyle(
             fontFamily: fontfamily,
             color: textDark.withOpacity(0.25),
@@ -294,6 +279,7 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
       builder: (context, value, child) {
         return Draggable<TaskItem>(
           data: TaskItem(
+            id: Random().nextInt(100000),
             task: value.text,
             minsRequired: getMinutesFromIndex(_selectedTimeIndex),
             taskType: TaskType.forceadd,
@@ -359,24 +345,6 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
     );
   }
 
-  Future<void> addTask(String taskName, int mins, TaskType taskType,
-      int colorIndex, bool isDone) async {
-    if (taskName == "") {
-      return;
-    }
-    TaskItem newTask = TaskItem(
-      task: taskName,
-      minsRequired: mins,
-      taskType: taskType,
-      colorIndex: colorIndex,
-      isDone: isDone,
-    );
-    await DatabaseManager.addTask(newTask, taskType);
-    widget.notifyParent();
-
-    newTaskFocusNode.requestFocus();
-  }
-
   int _selectedColorIndex = 0;
 
   Widget taskColor() {
@@ -408,5 +376,24 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
         );
       },
     );
+  }
+
+  Future<void> addTask(String taskName, int mins, TaskType taskType,
+      int colorIndex, bool isDone) async {
+    if (taskName == "") {
+      return;
+    }
+    TaskItem newTask = TaskItem(
+      id: Random().nextInt(100000),
+      task: taskName,
+      minsRequired: mins,
+      taskType: taskType,
+      colorIndex: colorIndex,
+      isDone: isDone,
+    );
+    await DatabaseManager.addTask(newTask, taskType);
+    widget.notifyParent();
+
+    newTaskFocusNode.requestFocus();
   }
 }

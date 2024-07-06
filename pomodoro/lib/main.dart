@@ -1,17 +1,9 @@
-import 'dart:math';
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:intl/intl.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
 import 'package:pomodoro/variables/integers.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pomodoro/pages/tasks/newTaskWidget.dart';
-import 'package:pomodoro/pages/tasks/taskItem.dart';
+import 'package:pomodoro/pages/tasks/new_task_widget.dart';
+import 'package:pomodoro/pages/tasks/task_item.dart';
 import 'package:pomodoro/variables/colors.dart';
 import 'package:pomodoro/variables/strings.dart';
 
@@ -49,11 +41,11 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Pomodoro Timer',
+      title: appTitle,
       home: Scaffold(
         appBar: AppBar(
           title: Text(
-            "${DateFormat.MMMM().format(DateTime.now())} ${DateTime.now().day}, ${DateTime.now().year}",
+            appHeaderText,
             style: const TextStyle(
               fontFamily: fontfamily,
               color: textLight,
@@ -74,21 +66,13 @@ class _MyAppState extends State<MyApp> {
       color: background,
       child: Row(
         children: [
-          Expanded(
-            child: newSession(),
-          ),
+          newSession(),
           rowDivider(),
-          Expanded(
-            child: tasksToday(),
-          ),
+          tasksToday(),
           rowDivider(),
-          Expanded(
-            child: tasksTomorrow(),
-          ),
+          tasksTomorrow(),
           rowDivider(),
-          Expanded(
-            child: tasksUpcoming(),
-          ),
+          tasksUpcoming(),
         ],
       ),
     );
@@ -103,16 +87,18 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget newSession() {
-    return Column(
-      children: [
-        // TODO day planner
-        Expanded(
-          child: Container(),
-        ),
-        NewTaskWidget(
-          notifyParent: refresh,
-        ),
-      ],
+    return Expanded(
+      child: Column(
+        children: [
+          // TODO day planner
+          Expanded(
+            child: Container(),
+          ),
+          NewTaskWidget(
+            notifyParent: refresh,
+          ),
+        ],
+      ),
     );
   }
 
@@ -125,92 +111,98 @@ class _MyAppState extends State<MyApp> {
   int willAcceptTaskIndex = -1;
 
   Widget tasksToday() {
-    return DragTarget<TaskItem>(
-      builder: (BuildContext context, List<TaskItem?> candidateData,
-          List<dynamic> rejectedData) {
-        return Column(
-          children: [
-            Container(
-              color: willAcceptTaskIndex == 0
-                  ? textDark.withOpacity(0.2)
-                  : background,
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  tasksHeaderText(TaskType.today),
-                  Expanded(child: Container()),
-                  tasksHeaderMore(0),
-                ],
+    return Expanded(
+      child: DragTarget<TaskItem>(
+        builder: (BuildContext context, List<TaskItem?> candidateData,
+            List<dynamic> rejectedData) {
+          return Column(
+            children: [
+              Container(
+                color: willAcceptTaskIndex == 0
+                    ? textDark.withOpacity(0.2)
+                    : background,
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    tasksHeaderText(TaskType.today),
+                    Expanded(child: Container()),
+                    tasksHeaderMore(0),
+                  ],
+                ),
               ),
-            ),
-            tasksDivider(),
-            taskBuilder(TaskType.today),
-          ],
-        );
-      },
-      onWillAcceptWithDetails: (data) => onWidgetWillDrop(0),
-      onAcceptWithDetails: (data) => onWidgetDrop(data, TaskType.today),
-      onLeave: (data) => onWidgetDragCancel(),
+              tasksDivider(),
+              taskBuilder(TaskType.today),
+            ],
+          );
+        },
+        onWillAcceptWithDetails: (data) => onWidgetWillDrop(0),
+        onAcceptWithDetails: (data) => onWidgetDrop(data, TaskType.today),
+        onLeave: (data) => onWidgetDragCancel(),
+      ),
     );
   }
 
   Widget tasksTomorrow() {
-    return DragTarget<TaskItem>(
-      builder: (BuildContext context, List<TaskItem?> candidateData,
-          List<dynamic> rejectedData) {
-        return Column(
-          children: [
-            Container(
-              color: willAcceptTaskIndex == 1
-                  ? textDark.withOpacity(0.2)
-                  : background,
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  tasksHeaderText(TaskType.tomorrow),
-                  Expanded(child: Container()),
-                  tasksHeaderMore(1),
-                ],
+    return Expanded(
+      child: DragTarget<TaskItem>(
+        builder: (BuildContext context, List<TaskItem?> candidateData,
+            List<dynamic> rejectedData) {
+          return Column(
+            children: [
+              Container(
+                color: willAcceptTaskIndex == 1
+                    ? textDark.withOpacity(0.2)
+                    : background,
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    tasksHeaderText(TaskType.tomorrow),
+                    Expanded(child: Container()),
+                    tasksHeaderMore(1),
+                  ],
+                ),
               ),
-            ),
-            tasksDivider(),
-            taskBuilder(TaskType.tomorrow),
-          ],
-        );
-      },
-      onWillAcceptWithDetails: (data) => onWidgetWillDrop(1),
-      onAcceptWithDetails: (data) => onWidgetDrop(data, TaskType.tomorrow),
-      onLeave: (data) => onWidgetDragCancel(),
+              tasksDivider(),
+              taskBuilder(TaskType.tomorrow),
+            ],
+          );
+        },
+        onWillAcceptWithDetails: (data) => onWidgetWillDrop(1),
+        onAcceptWithDetails: (data) => onWidgetDrop(data, TaskType.tomorrow),
+        onLeave: (data) => onWidgetDragCancel(),
+      ),
     );
   }
 
   Widget tasksUpcoming() {
-    return DragTarget<TaskItem>(
-      builder: (BuildContext context, List<TaskItem?> candidateData,
-          List<dynamic> rejectedData) {
-        return Column(
-          children: [
-            Container(
-              color: willAcceptTaskIndex == 2
-                  ? textDark.withOpacity(0.2)
-                  : background,
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  tasksHeaderText(TaskType.upcoming),
-                  Expanded(child: Container()),
-                  tasksHeaderMore(2),
-                ],
+    return Expanded(
+      child: DragTarget<TaskItem>(
+        builder: (BuildContext context, List<TaskItem?> candidateData,
+            List<dynamic> rejectedData) {
+          return Column(
+            children: [
+              Container(
+                color: willAcceptTaskIndex == 2
+                    ? textDark.withOpacity(0.2)
+                    : background,
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    tasksHeaderText(TaskType.upcoming),
+                    Expanded(child: Container()),
+                    tasksHeaderMore(2),
+                  ],
+                ),
               ),
-            ),
-            tasksDivider(),
-            taskBuilder(TaskType.upcoming),
-          ],
-        );
-      },
-      onWillAcceptWithDetails: (data) => onWidgetWillDrop(2),
-      onAcceptWithDetails: (data) => onWidgetDrop(data, TaskType.upcoming),
-      onLeave: (data) => onWidgetDragCancel(),
+              tasksDivider(),
+              taskBuilder(TaskType.upcoming),
+            ],
+          );
+        },
+        onWillAcceptWithDetails: (data) => onWidgetWillDrop(2),
+        onAcceptWithDetails: (data) => onWidgetDrop(data, TaskType.upcoming),
+        onLeave: (data) => onWidgetDragCancel(),
+      ),
     );
   }
 
@@ -280,7 +272,7 @@ class _MyAppState extends State<MyApp> {
 
   Widget tasksHeaderMore(int index) {
     return PopupMenuButton<int>(
-      tooltip: "more settings",
+      tooltip: "more options",
       color: background,
       onSelected: (value) {
         TaskType taskType = index == 0
@@ -308,72 +300,44 @@ class _MyAppState extends State<MyApp> {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 0,
-          child: Text(
-            'Remove Done',
-            style: TextStyle(
-              fontFamily: fontfamily,
-              fontWeight: FontWeight.normal,
-              fontSize: 16.0,
-            ),
-          ),
-        ),
-        const PopupMenuItem(
-          value: 1,
-          child: Text(
-            'Remove All',
-            style: TextStyle(
-              fontFamily: fontfamily,
-              fontWeight: FontWeight.normal,
-              fontSize: 16.0,
-            ),
-          ),
-        ),
-        const PopupMenuItem(
-          value: 2,
-          child: Text(
-            'Mark All Undone',
-            style: TextStyle(
-              fontFamily: fontfamily,
-              fontWeight: FontWeight.normal,
-              fontSize: 16.0,
-            ),
-          ),
-        ),
+        tasksHeaderMoreWidget(0, "Remove Done"),
+        tasksHeaderMoreWidget(1, "Remove All"),
+        tasksHeaderMoreWidget(2, "Mark All Undone"),
       ],
       icon: Icon(
         Icons.more_vert_rounded,
         color: textDark.withOpacity(0.7),
         size: 20.0,
-      ), // Icon for the button
+      ),
+    );
+  }
+
+  PopupMenuEntry<int> tasksHeaderMoreWidget(int value, String text) {
+    return PopupMenuItem(
+      value: value,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: fontfamily,
+          fontWeight: FontWeight.normal,
+          fontSize: 16.0,
+        ),
+      ),
     );
   }
 
   Widget taskBuilder(TaskType taskType) {
-    int length = taskType == TaskType.today
-        ? DatabaseManager.tasksToday.length
-        : taskType == TaskType.tomorrow
-            ? DatabaseManager.tasksTomorrow.length
-            : DatabaseManager.tasksUpcoming.length;
+    int length = getListFromTaskType(taskType).length;
 
     if (length == 0) {
-      return Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(
-                "- no tasks here -",
-                style: TextStyle(
-                  fontFamily: fontfamily,
-                  color: textDark.withOpacity(0.3),
-                  fontSize: 16.0,
-                ),
-              ),
-            ],
+      return Container(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          noTasksText,
+          style: TextStyle(
+            fontFamily: fontfamily,
+            color: textDark.withOpacity(0.3),
+            fontSize: 16.0,
           ),
         ),
       );
@@ -384,11 +348,7 @@ class _MyAppState extends State<MyApp> {
         itemCount: length,
         itemBuilder: (BuildContext context, int index) {
           return taskWidget(
-            taskType == TaskType.today
-                ? DatabaseManager.tasksToday[index]
-                : taskType == TaskType.tomorrow
-                    ? DatabaseManager.tasksTomorrow[index]
-                    : DatabaseManager.tasksUpcoming[index],
+            getListFromTaskType(taskType)[index],
             taskType,
           );
         },
@@ -425,7 +385,15 @@ class _MyAppState extends State<MyApp> {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onDoubleTap: () async {
-              await DatabaseManager.taskCompletionState(taskItem.toJson());
+              // Task Completed
+              await DatabaseManager.taskCompletionState(taskItem);
+              setState(() {
+                DatabaseManager.loadData();
+              });
+            },
+            onSecondaryTap: () async {
+              // Delete Task
+              await DatabaseManager.removeTask(taskItem, taskItem.taskType);
               setState(() {
                 DatabaseManager.loadData();
               });
@@ -439,7 +407,9 @@ class _MyAppState extends State<MyApp> {
                 opacity: opacity,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, vertical: 6.0),
+                    horizontal: 8.0,
+                    vertical: 6.0,
+                  ),
                   child: Row(
                     children: [
                       Container(width: 2.0),
@@ -513,5 +483,18 @@ class _MyAppState extends State<MyApp> {
     }
 
     return out;
+  }
+
+  List<TaskItem> getListFromTaskType(TaskType taskType) {
+    switch (taskType) {
+      case TaskType.today:
+        return DatabaseManager.tasksToday;
+      case TaskType.tomorrow:
+        return DatabaseManager.tasksTomorrow;
+      case TaskType.upcoming:
+        return DatabaseManager.tasksUpcoming;
+      case TaskType.forceadd:
+        return [];
+    }
   }
 }
