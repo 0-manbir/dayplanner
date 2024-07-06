@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pomodoro/pages/helpers/database_manager.dart';
+import 'package:pomodoro/pages/planner/day_planner.dart';
 import 'package:pomodoro/variables/integers.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:pomodoro/pages/tasks/new_task_widget.dart';
@@ -90,9 +91,8 @@ class _MyAppState extends State<MyApp> {
     return Expanded(
       child: Column(
         children: [
-          // TODO day planner
           Expanded(
-            child: Container(),
+            child: DayPlanner(),
           ),
           NewTaskWidget(
             notifyParent: refresh,

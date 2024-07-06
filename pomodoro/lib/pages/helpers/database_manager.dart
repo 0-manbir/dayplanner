@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:pomodoro/pages/planner/planner_section_item.dart';
 import 'package:pomodoro/pages/tasks/task_item.dart';
 import 'package:pomodoro/variables/strings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +17,8 @@ class DatabaseManager {
   static int tasksTodayLeft = 0;
   static int tasksTomorrowDurationMinutes = 0;
   static int tasksTomorrowLeft = 0;
+
+  static List<SectionItem> plannerSections = [];
 
   static String SUPABASE_URL = "";
   static String SUPABASE_ANON_KEY = "";
@@ -47,6 +50,7 @@ class DatabaseManager {
     tasksTomorrowLeft = 0;
     tasksTodayDurationMinutes = 0;
     tasksTomorrowDurationMinutes = 0;
+    plannerSections.clear();
 
     if (onlineMode) {
       await loadDataSupabase();
@@ -113,6 +117,15 @@ class DatabaseManager {
       tasksUpcoming = upcomingTasks + doneUpcomingTasks;
     } else {
       prefs.setStringList(prefsTasksUpcomingName, []);
+    }
+
+    if (prefs.containsKey(prefsPlannerSections)) {
+      List<String> sections = prefs.getStringList(prefsPlannerSections)!;
+      for (String section in sections) {
+        plannerSections.add(SectionItem.fromJson(jsonDecode(section)));
+      }
+    } else {
+      prefs.setStringList(prefsPlannerSections, []);
     }
   }
 

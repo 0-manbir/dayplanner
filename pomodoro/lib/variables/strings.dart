@@ -35,6 +35,7 @@ const String prefsAnonKey = "anon";
 const String prefsTasksTodayName = "tasksToday";
 const String prefsTasksTomorrowName = "tasksTomorrow";
 const String prefsTasksUpcomingName = "tasksUpcoming";
+const String prefsPlannerSections = "planner";
 
 // SUPABASE SETTINGS-------------------------------------------------------------------------------------
 // Create a new Supabase project.
