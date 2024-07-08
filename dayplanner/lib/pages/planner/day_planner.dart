@@ -247,8 +247,11 @@ class _DayPlannerState extends State<DayPlanner> {
             padding:
                 const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             decoration: BoxDecoration(
-              color:
-                  slotHovering == slot ? textDark.withOpacity(0.2) : textLight,
+              color: slotHovering == slot
+                  ? textDark.withOpacity(0.2)
+                  : (isSlotTime(slotItem)
+                      ? textDark.withOpacity(0.1)
+                      : textLight),
               borderRadius: const BorderRadius.all(Radius.circular(12.0)),
             ),
             child: Column(
@@ -801,5 +804,27 @@ class _DayPlannerState extends State<DayPlanner> {
     int availableDuration = getDurationInMinutes(item.startTime, item.endTime);
 
     return tasksDuration > availableDuration;
+  }
+
+  bool isSlotTime(SectionSlotItem slotItem) {
+    DateTime now = DateTime.now();
+    int currentHour = now.hour;
+    int currentMinute = now.minute;
+
+    int slotStartHour = int.parse(slotItem.startTime.split(':')[0]);
+    int slotEndHour = int.parse(slotItem.endTime.split(':')[0]);
+    int slotStartMinute = int.parse(slotItem.startTime.split(':')[1]);
+    int slotEndMinute = int.parse(slotItem.endTime.split(':')[1]);
+
+    if (currentHour > slotStartHour && currentHour < slotEndHour) {
+      return true;
+    } else if (currentHour == slotStartHour &&
+        currentMinute >= slotStartMinute) {
+      return true;
+    } else if (currentHour == slotEndHour && currentMinute < slotEndMinute) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
