@@ -33,8 +33,8 @@ class SectionItem {
       identical(this, other) ||
       other is SectionItem &&
           runtimeType == other.runtimeType &&
-          name == other.name;
+          id == other.id;
 
   @override
-  int get hashCode => name.hashCode;
+  int get hashCode => id.hashCode;
 }

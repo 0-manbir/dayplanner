@@ -1,11 +1,14 @@
 import 'dart:convert';
-import 'package:pomodoro/pages/planner/planner_section_item.dart';
-import 'package:pomodoro/pages/tasks/task_item.dart';
-import 'package:pomodoro/variables/strings.dart';
+import 'package:dayplanner/pages/planner/planner_section_item.dart';
+import 'package:dayplanner/pages/planner/planner_section_slot_item.dart';
+import 'package:dayplanner/pages/tasks/task_item.dart';
+import 'package:dayplanner/variables/strings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DatabaseManager {
+  static late DateTime lastActiveDate;
+
   static late SharedPreferences prefs;
   static late bool onlineMode;
 
@@ -25,6 +28,13 @@ class DatabaseManager {
 
   static Future<void> loadSharedPrefs() async {
     prefs = await SharedPreferences.getInstance();
+
+    if (prefs.containsKey(prefsLastActiveDate)) {
+      lastActiveDate = DateTime.parse(prefs.getString(prefsLastActiveDate)!);
+    } else {
+      prefs.setString(prefsLastActiveDate, DateTime.now().toString());
+      lastActiveDate = DateTime.now();
+    }
 
     if (prefs.containsKey(prefsAPIKey)) {
       SUPABASE_URL = prefs.getString(prefsAPIKey)!;
@@ -56,6 +66,16 @@ class DatabaseManager {
       await loadDataSupabase();
     } else {
       await loadDataLocal();
+    }
+
+    if (lastActiveDate.day != DateTime.now().day) {
+      lastActiveDate = DateTime.now();
+      prefs.setString(prefsLastActiveDate, lastActiveDate.toString());
+
+      await removeDone(TaskType.today);
+      tasksToday += tasksTomorrow;
+      _updatePrefs(TaskType.today, tasksToday);
+      tasksTomorrow.clear();
     }
 
     print("Data Loaded");
@@ -206,14 +226,14 @@ class DatabaseManager {
   }
 
   // HEADER MORE OPTIONS---------------------------------------------------------------------------------------------------
-  static void removeDone(TaskType taskType) {
+  static Future<void> removeDone(TaskType taskType) async {
     List<TaskItem> taskList = _getTaskList(taskType);
     taskList.removeWhere((task) => task.isDone);
-    _updatePrefs(taskType, taskList);
+    await _updatePrefs(taskType, taskList);
   }
 
-  static void removeAll(TaskType taskType) {
-    _updatePrefs(taskType, []);
+  static Future<void> removeAll(TaskType taskType) async {
+    await _updatePrefs(taskType, []);
   }
 
   static void markUndone(TaskType taskType) {
@@ -233,6 +253,73 @@ class DatabaseManager {
     plannerSections.add(sectionItem);
     prefs.setStringList(
         prefsPlannerSections, plannerSections.map((e) => e.toJson()).toList());
+  }
+
+  static Future<void> removeSectionSlot(
+      SectionItem section, SectionSlotItem slot) async {
+    for (int i = 0; i < section.slots.length; i++) {
+      SectionSlotItem slotItem =
+          SectionSlotItem.fromJson(jsonDecode(section.slots[i]));
+      if (slotItem.id == slot.id) {
+        section.slots.removeAt(i);
+        break;
+      }
+    }
+
+    for (int i = 0; i < plannerSections.length; i++) {
+      if (plannerSections[i].id == section.id) {
+        plannerSections[i] = section;
+        break;
+      }
+    }
+
+    await prefs.setStringList(
+        prefsPlannerSections, plannerSections.map((e) => e.toJson()).toList());
+  }
+
+  static void updateSectionSlots(
+      SectionItem section, SectionSlotItem slot, List<String> tasks) {
+    for (int i = 0; i < section.slots.length; i++) {
+      SectionSlotItem slotItem =
+          SectionSlotItem.fromJson(jsonDecode(section.slots[i]));
+      if (slotItem.id == slot.id) {
+        slotItem.tasks = tasks;
+        section.slots[i] = slotItem.toJson();
+        break;
+      }
+    }
+    for (int i = 0; i < plannerSections.length; i++) {
+      if (plannerSections[i].id == section.id) {
+        plannerSections[i] = section;
+        break;
+      }
+    }
+    prefs.setStringList(
+        prefsPlannerSections, plannerSections.map((e) => e.toJson()).toList());
+  }
+
+  static Future<void> removeTaskFromSlot(
+      SectionItem section, SectionSlotItem slot, TaskItem taskItem) async {
+    List<String> updatedTasks = slot.tasks;
+    updatedTasks
+        .removeWhere((element) => jsonDecode(element)["id"] == taskItem.id);
+
+    DatabaseManager.updateSectionSlots(section, slot, updatedTasks);
+  }
+
+  static Future<void> slotTaskCompletionStatus(
+      SectionItem section, SectionSlotItem slot, TaskItem taskItem) async {
+    List<String> updatedTasks = slot.tasks;
+
+    for (int i = 0; i < updatedTasks.length; i++) {
+      if (jsonDecode(updatedTasks[i])["id"] == taskItem.id) {
+        TaskItem temp = TaskItem.fromJson(jsonDecode(updatedTasks[i]));
+        temp.isDone = !temp.isDone;
+        updatedTasks[i] = temp.toJson();
+        break;
+      }
+    }
+    DatabaseManager.updateSectionSlots(section, slot, updatedTasks);
   }
 
   // HELPERS---------------------------------------------------------------------------------------------------------------
@@ -274,7 +361,12 @@ class DatabaseManager {
 
   static Future<void> updateSlots(SectionItem item, List<String> slots) async {
     item.slots = slots;
-    prefs.setStringList(
-        prefsPlannerSections, plannerSections.map((e) => e.toJson()).toList());
+
+    for (int i = 0; i < plannerSections.length; i++) {
+      if (plannerSections[i].id == item.id) {
+        plannerSections[i] = item;
+        break;
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ class SectionSlotItem {
   String endTime;
   bool canAddTasks = false;
   String header = "{Empty}";
+  List<String> tasks = [];
 
   SectionSlotItem({
     required this.id,
@@ -13,6 +14,7 @@ class SectionSlotItem {
     required this.endTime,
     required this.canAddTasks,
     required this.header,
+    required this.tasks,
   });
 
   String toJson() {
@@ -22,6 +24,7 @@ class SectionSlotItem {
       'endTime': endTime,
       'canAddTasks': canAddTasks,
       'header': header,
+      'tasks': tasks,
     };
     return jsonEncode(data);
   }
@@ -33,6 +36,7 @@ class SectionSlotItem {
       endTime: data['endTime'],
       canAddTasks: data['canAddTasks'],
       header: data['header'],
+      tasks: List<String>.from(data['tasks']),
     );
   }
 }

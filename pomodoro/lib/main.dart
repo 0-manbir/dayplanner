@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:pomodoro/pages/helpers/database_manager.dart';
-import 'package:pomodoro/pages/planner/day_planner.dart';
-import 'package:pomodoro/variables/integers.dart';
+import 'package:dayplanner/pages/helpers/database_manager.dart';
+import 'package:dayplanner/pages/planner/day_planner.dart';
+import 'package:dayplanner/variables/integers.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:pomodoro/pages/tasks/new_task_widget.dart';
-import 'package:pomodoro/pages/tasks/task_item.dart';
-import 'package:pomodoro/variables/colors.dart';
-import 'package:pomodoro/variables/strings.dart';
+import 'package:dayplanner/pages/tasks/new_task_widget.dart';
+import 'package:dayplanner/pages/tasks/task_item.dart';
+import 'package:dayplanner/variables/colors.dart';
+import 'package:dayplanner/variables/strings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +18,7 @@ Future<void> main() async {
     await windowManager.setOpacity(1);
     await windowManager.setAlwaysOnTop(false);
     await windowManager.center();
-    await windowManager.setTitle("Pomodoro Timer");
+    await windowManager.setTitle("dayplanner Timer");
     await windowManager.setMinimumSize(const Size(800, 500));
     await windowManager.setSize(const Size(1100, 700));
     await windowManager.show();
@@ -95,9 +95,6 @@ class _MyAppState extends State<MyApp> {
             child: DayPlanner(
               notifyParent: refresh,
             ),
-          ),
-          NewTaskWidget(
-            notifyParent: refresh,
           ),
         ],
       ),
@@ -198,6 +195,10 @@ class _MyAppState extends State<MyApp> {
               ),
               tasksDivider(),
               taskBuilder(TaskType.upcoming),
+              Expanded(child: Container()),
+              NewTaskWidget(
+                notifyParent: refresh,
+              ),
             ],
           );
         },

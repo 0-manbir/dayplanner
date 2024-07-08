@@ -36,6 +36,7 @@ const String prefsTasksTodayName = "tasksToday";
 const String prefsTasksTomorrowName = "tasksTomorrow";
 const String prefsTasksUpcomingName = "tasksUpcoming";
 const String prefsPlannerSections = "planner";
+const String prefsLastActiveDate = "lastactive";
 
 // SUPABASE SETTINGS-------------------------------------------------------------------------------------
 // Create a new Supabase project.

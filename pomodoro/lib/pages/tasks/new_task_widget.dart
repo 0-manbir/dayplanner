@@ -1,11 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:pomodoro/pages/helpers/database_manager.dart';
-import 'package:pomodoro/pages/tasks/task_item.dart';
-import 'package:pomodoro/variables/colors.dart';
-import 'package:pomodoro/variables/integers.dart';
-import 'package:pomodoro/variables/strings.dart';
+import 'package:dayplanner/pages/helpers/database_manager.dart';
+import 'package:dayplanner/pages/tasks/task_item.dart';
+import 'package:dayplanner/variables/colors.dart';
+import 'package:dayplanner/variables/integers.dart';
+import 'package:dayplanner/variables/strings.dart';
 
 class NewTaskWidget extends StatefulWidget {
   final Function notifyParent;
@@ -45,7 +45,12 @@ class _NewTaskWidgetState extends State<NewTaskWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(12.0),
+      margin: const EdgeInsets.only(
+        left: 8.0,
+        right: 8.0,
+        bottom: 8.0,
+        top: 4.0,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: textLight,
