@@ -92,7 +92,9 @@ class _MyAppState extends State<MyApp> {
       child: Column(
         children: [
           Expanded(
-            child: DayPlanner(),
+            child: DayPlanner(
+              notifyParent: refresh,
+            ),
           ),
           NewTaskWidget(
             notifyParent: refresh,

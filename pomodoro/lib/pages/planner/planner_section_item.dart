@@ -27,4 +27,14 @@ class SectionItem {
       slots: List<String>.from(data['slots']),
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SectionItem &&
+          runtimeType == other.runtimeType &&
+          name == other.name;
+
+  @override
+  int get hashCode => name.hashCode;
 }

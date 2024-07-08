@@ -228,6 +228,13 @@ class DatabaseManager {
     _updatePrefs(taskType, taskList);
   }
 
+  // ADD A SECTION--------------------------------------------------------------------------------------------------------
+  static void addSection(SectionItem sectionItem) {
+    plannerSections.add(sectionItem);
+    prefs.setStringList(
+        prefsPlannerSections, plannerSections.map((e) => e.toJson()).toList());
+  }
+
   // HELPERS---------------------------------------------------------------------------------------------------------------
   static List<TaskItem> _getTaskList(TaskType taskType) {
     switch (taskType) {
@@ -263,5 +270,11 @@ class DatabaseManager {
     } else {
       await prefs.setStringList(prefsTasksName, taskListJson);
     }
+  }
+
+  static Future<void> updateSlots(SectionItem item, List<String> slots) async {
+    item.slots = slots;
+    prefs.setStringList(
+        prefsPlannerSections, plannerSections.map((e) => e.toJson()).toList());
   }
 }
