@@ -44,19 +44,19 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: appTitle,
       home: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            appHeaderText,
-            style: const TextStyle(
-              fontFamily: fontfamily,
-              color: textLight,
-            ),
-          ),
-          foregroundColor: background,
-          backgroundColor: primary,
-          elevation: 10.0,
-          shadowColor: shadow,
-        ),
+        // appBar: AppBar(
+        //   title: Text(
+        //     appHeaderText,
+        //     style: const TextStyle(
+        //       fontFamily: fontfamily,
+        //       color: textLight,
+        //     ),
+        //   ),
+        //   foregroundColor: background,
+        //   backgroundColor: primary,
+        //   elevation: 10.0,
+        //   shadowColor: shadow,
+        // ),
         body: mainContent(),
       ),
     );
@@ -131,6 +131,10 @@ class _MyAppState extends State<MyApp> {
               ),
               tasksDivider(),
               taskBuilder(TaskType.today),
+              Expanded(child: Container()),
+              NewTaskWidget(
+                notifyParent: refresh,
+              ),
             ],
           );
         },
@@ -195,10 +199,6 @@ class _MyAppState extends State<MyApp> {
               ),
               tasksDivider(),
               taskBuilder(TaskType.upcoming),
-              Expanded(child: Container()),
-              NewTaskWidget(
-                notifyParent: refresh,
-              ),
             ],
           );
         },

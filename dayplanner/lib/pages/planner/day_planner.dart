@@ -243,14 +243,12 @@ class _DayPlannerState extends State<DayPlanner> {
             widget.notifyParent();
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 6.0),
+            margin: const EdgeInsets.only(bottom: 10.0),
             padding:
-                const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             decoration: BoxDecoration(
-              // color:
-              //     slotHovering == slot ? textDark.withOpacity(0.1) : textLight,
               color:
-                  slotHovering == slot ? textDark.withOpacity(0.1) : background,
+                  slotHovering == slot ? textDark.withOpacity(0.2) : textLight,
               borderRadius: const BorderRadius.all(Radius.circular(12.0)),
             ),
             child: Column(
@@ -264,46 +262,36 @@ class _DayPlannerState extends State<DayPlanner> {
                       style: const TextStyle(
                         fontFamily: fontfamily,
                         color: textDark,
-                        fontSize: 14.0,
+                        fontSize: 12.0,
                       ),
                     ),
                     Container(
                       width: 16.0,
                     ),
                     slotItem.canAddTasks
-                        ? Text(
-                            formatTimeFromMinutes(
-                                slotTasksDurationMinutes(slotItem)),
-                            style: TextStyle(
-                              fontFamily: fontfamily,
-                              color: Color.lerp(
-                                Colors.green[200],
-                                Colors.red[200],
-                                slotGradientValue(slotItem),
-                              ),
-                              fontSize: 14.0,
-                            ),
-                          )
+                        ? Container()
                         : Text(
                             slotItem.header,
                             style: const TextStyle(
                               fontFamily: fontfamily,
                               color: textDark,
-                              fontSize: 16.0,
-                              // fontWeight: FontWeight.w500,
+                              fontSize: 14.0,
                             ),
                           ),
                     Expanded(child: Container()),
                     Text(
-                      formatTimeFromMinutes(getDurationInMinutes(
-                                  slotItem.startTime, slotItem.endTime)) ==
-                              ""
-                          ? "0m"
+                      slotItem.canAddTasks
+                          ? formatTimeFromMinutes(
+                              slotTasksDurationMinutes(slotItem))
                           : formatTimeFromMinutes(getDurationInMinutes(
                               slotItem.startTime, slotItem.endTime)),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: fontfamily,
-                        color: textDark,
+                        color: slotItem.canAddTasks
+                            ? (slotDurationMoreThanTime(slotItem)
+                                ? Colors.red[200]
+                                : Colors.green[200])
+                            : textDark.withOpacity(0.3),
                         fontSize: 14.0,
                       ),
                     ),
@@ -370,7 +358,7 @@ class _DayPlannerState extends State<DayPlanner> {
     }
 
     return SizedBox(
-      height: min(31.0 * slotItem.tasks.length, 93.0),
+      height: min(27.0 * slotItem.tasks.length, 81.0),
       child: ListView.builder(
         itemCount: slotItem.tasks.length,
         itemBuilder: (context, index) {
@@ -445,7 +433,7 @@ class _DayPlannerState extends State<DayPlanner> {
                         child: Icon(
                           Icons.arrow_right_rounded,
                           color: textDark.withOpacity(0.7),
-                          size: 18.0,
+                          size: 14.0,
                         ),
                       ),
                       Container(width: 4.0),
@@ -457,7 +445,7 @@ class _DayPlannerState extends State<DayPlanner> {
                           style: TextStyle(
                             fontFamily: fontfamily,
                             color: taskCategoryColors[taskItem.colorIndex],
-                            fontSize: 16.0,
+                            fontSize: 14.0,
                             fontWeight: FontWeight.normal,
                             height: 1,
                             decoration: taskItem.isDone
@@ -475,7 +463,7 @@ class _DayPlannerState extends State<DayPlanner> {
                           decoration: TextDecoration.none,
                           fontWeight: FontWeight.normal,
                           color: textDark.withOpacity(0.7),
-                          fontSize: 12.0,
+                          fontSize: 10.0,
                         ),
                       ),
                     ],
@@ -586,7 +574,8 @@ class _DayPlannerState extends State<DayPlanner> {
           );
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+          margin: const EdgeInsets.only(
+              top: 4.0, bottom: 16.0, left: 16.0, right: 16.0),
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
           decoration: BoxDecoration(
             color: Colors.grey[200],
@@ -807,12 +796,10 @@ class _DayPlannerState extends State<DayPlanner> {
     return duration;
   }
 
-  double slotGradientValue(SectionSlotItem item) {
+  bool slotDurationMoreThanTime(SectionSlotItem item) {
     int tasksDuration = slotTasksDurationMinutes(item);
     int availableDuration = getDurationInMinutes(item.startTime, item.endTime);
 
-    if (tasksDuration > availableDuration) return 1.0;
-
-    return tasksDuration / availableDuration;
+    return tasksDuration > availableDuration;
   }
 }
