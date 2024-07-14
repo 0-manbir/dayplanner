@@ -73,9 +73,16 @@ class DatabaseManager {
       prefs.setString(prefsLastActiveDate, lastActiveDate.toString());
 
       await removeDone(TaskType.today);
+
+      for (int i = 0; i < tasksTomorrow.length; i++) {
+        tasksTomorrow[i].taskType = TaskType.today;
+      }
+
       tasksToday += tasksTomorrow;
-      _updatePrefs(TaskType.today, tasksToday);
       tasksTomorrow.clear();
+
+      await removeAll(TaskType.tomorrow);
+      _updatePrefs(TaskType.today, tasksToday);
     }
 
     print("Data Loaded");
