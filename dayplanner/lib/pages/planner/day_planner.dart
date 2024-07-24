@@ -271,16 +271,14 @@ class _DayPlannerState extends State<DayPlanner> {
                     Container(
                       width: 16.0,
                     ),
-                    slotItem.canAddTasks
-                        ? Container()
-                        : Text(
-                            slotItem.header,
-                            style: const TextStyle(
-                              fontFamily: fontfamily,
-                              color: textDark,
-                              fontSize: 14.0,
-                            ),
-                          ),
+                    Text(
+                      slotItem.header,
+                      style: const TextStyle(
+                        fontFamily: fontfamily,
+                        color: textDark,
+                        fontSize: 14.0,
+                      ),
+                    ),
                     Expanded(child: Container()),
                     Text(
                       slotItem.canAddTasks
