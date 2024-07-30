@@ -535,14 +535,6 @@ class _DayPlannerState extends State<DayPlanner> {
                                 ),
                                 Container(height: 16.0),
                                 addNewSlotNameTextField(),
-                                Text(
-                                  "(if no tasks are to be added)",
-                                  style: TextStyle(
-                                    fontFamily: fontfamily,
-                                    color: textDark.withOpacity(0.2),
-                                    fontSize: 12.0,
-                                  ),
-                                ),
                                 Container(height: 16.0),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -687,9 +679,11 @@ class _DayPlannerState extends State<DayPlanner> {
   Widget addNewSlotButton() {
     return ElevatedButton(
       onPressed: () async {
+        print("save1");
         if (selectedTemplate == null) {
           return;
         }
+        print("save2");
 
         List<String> slots = selectedTemplate!.slots;
 
@@ -725,9 +719,9 @@ class _DayPlannerState extends State<DayPlanner> {
           slots.insert(insertIndex, newSlot.toJson());
         }
 
-        await DatabaseManager.updateSlots(selectedTemplate!, slots);
+        print("save3");
 
-        widget.notifyParent();
+        await DatabaseManager.updateSlots(selectedTemplate!, slots);
 
         if (newSlotNameController.text.isNotEmpty) {
           newSlotNameController.clear();
@@ -735,8 +729,12 @@ class _DayPlannerState extends State<DayPlanner> {
           newSlotEndTime = "";
           canAddTasks = false;
         }
+
+        print("save4");
         // ignore: use_build_context_synchronously
         if (Navigator.canPop(context)) Navigator.pop(context);
+
+        widget.notifyParent();
       },
       child: Text(
         'Add Slot',

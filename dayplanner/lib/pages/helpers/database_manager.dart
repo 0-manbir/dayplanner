@@ -367,13 +367,21 @@ class DatabaseManager {
   }
 
   static Future<void> updateSlots(SectionItem item, List<String> slots) async {
+    // Update the slots of the item
     item.slots = slots;
 
+    // Find and update the corresponding SectionItem in plannerSections
     for (int i = 0; i < plannerSections.length; i++) {
       if (plannerSections[i].id == item.id) {
         plannerSections[i] = item;
         break;
       }
     }
+
+    // Save updated plannerSections to shared preferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> plannerSectionsJson =
+        plannerSections.map((section) => section.toJson()).toList();
+    await prefs.setStringList(prefsPlannerSections, plannerSectionsJson);
   }
 }
